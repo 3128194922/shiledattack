@@ -2,18 +2,27 @@ package com.shiledattack.client.handler;
 
 import com.shiledattack.Config;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ShieldItem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = com.shiledattack.ShiledAttackMod.MODID, value = Dist.CLIENT)
+@SuppressWarnings("deprecation")
 public class ShieldAutoHandler {
+    private static final TagKey<Item> SHIELD_TAG = TagKey.create(Registries.ITEM, new ResourceLocation("forge", "tools/shields"));
     private static boolean shieldWasReleased = false;
     private static InteractionHand shieldHand = InteractionHand.OFF_HAND;
+
+    private static boolean isShield(ItemStack stack) {
+        return stack.is(SHIELD_TAG);
+    }
 
     @SubscribeEvent
     public static void onPreClientTick(TickEvent.ClientTickEvent event) {
@@ -25,7 +34,7 @@ public class ShieldAutoHandler {
 
         if (mc.options.keyAttack.isDown() && mc.player.isUsingItem()) {
             ItemStack useItem = mc.player.getUseItem();
-            if (useItem.getItem() instanceof ShieldItem) {
+            if (isShield(useItem)) {
                 shieldHand = mc.player.getUsedItemHand();
                 mc.player.stopUsingItem();
                 shieldWasReleased = true;
@@ -46,14 +55,14 @@ public class ShieldAutoHandler {
 
         if (mc.options.keyUse.isDown() && !mc.player.isUsingItem()) {
             ItemStack stack = mc.player.getItemInHand(shieldHand);
-            if (stack.getItem() instanceof ShieldItem) {
+            if (isShield(stack)) {
                 mc.player.startUsingItem(shieldHand);
             } else {
                 InteractionHand otherHand = shieldHand == InteractionHand.OFF_HAND
                         ? InteractionHand.MAIN_HAND
                         : InteractionHand.OFF_HAND;
                 stack = mc.player.getItemInHand(otherHand);
-                if (stack.getItem() instanceof ShieldItem) {
+                if (isShield(stack)) {
                     mc.player.startUsingItem(otherHand);
                 }
             }
