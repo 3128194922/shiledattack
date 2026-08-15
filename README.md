@@ -2,6 +2,9 @@
 
 一个 Minecraft Forge 模组，提供盾牌自动收放与长按自动攻击功能。
 
+## 参考MOD
+https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file
+
 ## 环境要求
 
 | 项目 | 版本 |

@@ -21,16 +21,28 @@ public class Config {
             .comment("Automatically raise shield when sneaking, allowing right-click on main hand items")
             .define("sneakAutoShield", true);
 
+    public static final ForgeConfigSpec.BooleanValue SHIELD_DELAY_OVERRIDE = BUILDER
+            .comment("Override the vanilla hardcoded 5-tick shield raise delay")
+            .define("shieldDelayOverride", true);
+
+    public static final ForgeConfigSpec.IntValue SHIELD_RAISE_DELAY = BUILDER
+            .comment("Shield raise delay in ticks (0 = instant block, 5 = vanilla)")
+            .defineInRange("shieldRaiseDelay", 0, 0, 5);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
     public static boolean holdAttackButton;
     public static boolean sneakAutoShield;
+    public static boolean shieldDelayOverride;
+    public static int shieldRaiseDelay;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
         enabled = ENABLED.get();
         holdAttackButton = HOLD_ATTACK_BUTTON.get();
         sneakAutoShield = SNEAK_AUTO_SHIELD.get();
+        shieldDelayOverride = SHIELD_DELAY_OVERRIDE.get();
+        shieldRaiseDelay = SHIELD_RAISE_DELAY.get();
     }
 }
