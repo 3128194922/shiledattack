@@ -156,6 +156,8 @@ public class MixinTicksConst {
 | 播放铁砧音效 | `block.anvil.hit`，音量由 `parrySoundVolume` 控制 |
 | 进入冷却 | 冷却时长由 `parryCooldownSeconds`（单位秒）控制，期间无法再次盾反 |
 
+**冷却就绪提示：**当盾反冷却结束后（CD 由满到就绪的那一刻），为玩家本地播放**原版按钮音效** `ui.button.click`（音量同样受 `parrySoundVolume` 控制）作为「可以再次盾反」的提示。
+
 **HUD 指示：**盾反就绪时，在玩家**副手栏左侧**绘制一个护盾图标；处于冷却期间图标隐藏。图标锚定副手栏位渲染，跟随左右手配色自动定位，仅在副手持有盾牌且就绪时显示。
 
 **无法盾反的伤害类型（数据驱动 tag）：**

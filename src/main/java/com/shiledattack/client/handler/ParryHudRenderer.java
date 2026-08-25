@@ -8,6 +8,7 @@ import com.shiledattack.network.ClientParryState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -33,7 +34,16 @@ public class ParryHudRenderer {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        int before = ClientParryState.getRemaining();
         ClientParryState.tick();
+        // Play the vanilla button sound the moment the parry cooldown finishes.
+        if (before > 0 && ClientParryState.isReady() && Config.parryEnabled) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                mc.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(),
+                        (float) Config.parrySoundVolume, 1.0F);
+            }
+        }
     }
 
     @SubscribeEvent

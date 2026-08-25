@@ -8,6 +8,10 @@ public final class ClientParryState {
         remainingTicks = Math.max(0, ticks);
     }
 
+    public static int getRemaining() {
+        return remainingTicks;
+    }
+
     public static boolean isReady() {
         return remainingTicks <= 0;
     }
