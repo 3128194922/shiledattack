@@ -106,6 +106,14 @@ public class ShieldAutoHandler {
                 // 用 gameMode.releaseUsingItem 发包释放，确保服务端同步
                 mc.gameMode.releaseUsingItem(mc.player);
                 shieldWasReleased = true;
+                // 潜行自动举盾场景下，之前为了保护盾牌而假按了右键（fakeKeyUseDown）。
+                // 放盾后必须立即解除假按，否则原版 handleKeybinds 会把该假右键当作
+                // 真实右键，对主手物品误触发一次 use（右键）事件（此时未在使用物品）。
+                // 这里仅解除假按，不影响用户真实按住的右键。
+                if (fakeKeyUseDown) {
+                    fakeKeyUseDown = false;
+                    mc.options.keyUse.setDown(false);
+                }
             }
         }
 
