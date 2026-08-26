@@ -1,6 +1,6 @@
 # Shield Auto Attack
 
-一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡与盾反功能。
+一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡与盾反功能。本mod由AI编写。
 
 ## 参考MOD
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
