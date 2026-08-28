@@ -1,6 +1,6 @@
 # Shield Auto Attack
 
-一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡与盾反功能。本mod由AI编写。
+一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡、盾反与攻击不打断疾跑/游泳功能。本mod由AI编写。
 
 ## 参考MOD
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
@@ -196,6 +196,42 @@ ParryEvents.parried(event => {
 
 > 事件类由模组提供的 KubeJS 插件注册，KubeJS 通过 `kubejs.plugins.txt` 懒加载该插件；未安装 KubeJS 时模组仍可正常运行，只是不触发回调。
 
+### 7. 攻击不打断疾跑/游泳（Sprint Attacks）
+
+移植自 [combat-nouveau](https://github.com/fuzs/combat-nouveau) 的 `sprintAttacks` 特性。原版 `Player.attack()` 在攻击命中应用疾跑击退加成后会调用 `setSprinting(false)` 停止疾跑——这也是水下攻击生物时每次都会中断游泳的原因。
+
+本模组通过 Mixin 在攻击前记录 sprint 状态，在原版停止疾跑后立即恢复：
+
+```java
+@Mixin(Player.class)
+public class PlayerMixin extends LivingEntity {
+    @Inject(method = "attack", at = @At("HEAD"))
+    private void shiledattack$recordSprint(Entity target, CallbackInfo ci) {
+        this.shiledattack$sprintsDuringAttack = this.isSprinting();
+    }
+
+    @Inject(method = "attack", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/player/Player;setSprinting(Z)V",
+            shift = At.Shift.AFTER))
+    private void shiledattack$restoreSprint(Entity target, CallbackInfo ci) {
+        if (Config.sprintAttacks && this.shiledattack$sprintsDuringAttack) {
+            this.setSprinting(true);
+        }
+        this.shiledattack$sprintsDuringAttack = false;
+    }
+}
+```
+
+**效果：**
+
+| 场景 | 行为 |
+|------|------|
+| 陆地疾跑中攻击 | 保持疾跑，不损失速度 |
+| 水下游泳中攻击 | 保持游泳状态，不被迫停下 |
+| 未疾跑时攻击 | 无影响（与原版一致） |
+
+> 服务端侧生效：Mixin 注入两侧，确保单机与多人联机一致。
+
 ## 配置
 
 配置文件位于 `config/shiledattack-common.toml`：
@@ -215,6 +251,7 @@ ParryEvents.parried(event => {
 | `parryKnockbackMax` | double | `4.0` | 盾反击退的最大水平速度 |
 | `parryKnockUp` | double | `0.35` | 盾反时施加给攻击者的上抛力度 |
 | `parrySoundVolume` | double | `1.0` | 盾反铁砧音效音量 |
+| `sprintAttacks` | boolean | `true` | 攻击不打断疾跑/游泳状态 |
 
 前四个功能相互独立，可单独开关。`shieldRaiseDelay` 仅在 `shieldDelayOverride=true` 时生效。
 盾反相关配置仅需 `parryEnabled=true` 即生效；`parryWindowTicks` 单位为 tick，`parryCooldownSeconds` 单位为秒。
@@ -277,7 +314,8 @@ src/main/java/com/shiledattack/
 │   ├── ParryCooldownMessage.java         # 冷却剩余时间同步包
 │   └── ClientParryState.java             # 客户端冷却状态缓存
 └── mixin/
-    └── MixinTicksConst.java              # 取消盾牌举起 5 tick 延迟（@ModifyConstant）
+    ├── MixinTicksConst.java              # 取消盾牌举起 5 tick 延迟（@ModifyConstant）
+    └── PlayerMixin.java                  # 攻击不打断疾跑/游泳（移植自 combat-nouveau）
 
 src/main/resources/
 ├── shiledattack.mixin.json               # Mixin 配置（声明 Mixin 类与 refmap）
