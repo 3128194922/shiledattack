@@ -4,7 +4,7 @@
 
 ## 参考MOD
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
-- [combat-nouveau](https://github.com/fuzs/combat-nouveau)：长按攻击机制参考
+- [combat-nouveau](https://github.com/fuzs/combat-nouveau)：长按攻击机制参考，攻击不打断疾跑参考。
 
 ## 环境要求
 

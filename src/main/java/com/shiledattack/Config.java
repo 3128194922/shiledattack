@@ -63,6 +63,11 @@ public class Config {
             .comment("Anvil sound volume played on a successful parry")
             .defineInRange("parrySoundVolume", 1.0, 0.0, 5.0);
 
+    public static final ForgeConfigSpec.BooleanValue SPRINT_ATTACKS = BUILDER
+            .comment("Attacking will no longer stop the player from sprinting or swimming",
+                    "Ported from Combat Nouveau's sprint attacks feature")
+            .define("sprintAttacks", true);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
@@ -79,6 +84,7 @@ public class Config {
     public static double parryKnockbackMax;
     public static double parryKnockUp;
     public static double parrySoundVolume;
+    public static boolean sprintAttacks;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -96,5 +102,6 @@ public class Config {
         parryKnockbackMax = PARRY_KNOCKBACK_MAX.get();
         parryKnockUp = PARRY_KNOCK_UP.get();
         parrySoundVolume = PARRY_SOUND_VOLUME.get();
+        sprintAttacks = SPRINT_ATTACKS.get();
     }
 }
