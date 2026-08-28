@@ -9,26 +9,36 @@ import net.minecraftforge.eventbus.api.Event;
  * Fired on the Forge event bus whenever a shield parry succeeds.
  *
  * Modelled after {@code ExtremeEvasionTriggeredEvent}: it is a plain transport
- * event that carries the parrying player, the attacker, the damage source and
+ * event that carries the parrying entity, the attacker, the damage source and
  * the blocked damage. KubeJS reposts it as a {@code ParryEvents.parried} event
  * so scripts can react to parries.
+ *
+ * The blocker may be any {@link LivingEntity} (e.g. a shield-wielding mob from
+ * MobsUseShields); {@link #getPlayer()} returns null when the parry was
+ * performed by a non-player entity.
  */
 public class ShieldParriedEvent extends Event {
-    private final ServerPlayer player;
+    private final LivingEntity blocker;
     private final LivingEntity attacker;
     private final DamageSource damageSource;
     private final float blockedDamage;
 
-    public ShieldParriedEvent(ServerPlayer player, LivingEntity attacker,
+    public ShieldParriedEvent(LivingEntity blocker, LivingEntity attacker,
                               DamageSource damageSource, float blockedDamage) {
-        this.player = player;
+        this.blocker = blocker;
         this.attacker = attacker;
         this.damageSource = damageSource;
         this.blockedDamage = blockedDamage;
     }
 
+    /** The entity that performed the shield parry (player or mob). */
+    public LivingEntity getBlocker() {
+        return blocker;
+    }
+
+    /** The parrying entity as a player, or null if the parry was performed by a non-player entity. */
     public ServerPlayer getPlayer() {
-        return player;
+        return blocker instanceof ServerPlayer player ? player : null;
     }
 
     public LivingEntity getAttacker() {

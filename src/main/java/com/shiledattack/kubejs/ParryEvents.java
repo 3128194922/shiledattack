@@ -8,7 +8,8 @@ import dev.latvian.mods.kubejs.event.EventHandler;
  *
  * <pre>{@code
  * ParryEvents.parried(event => {
- *     // event.player, event.attacker, event.damageSource, event.blockedDamage
+ *     // event.blocker, event.attacker, event.damageSource, event.blockedDamage
+ *     // event.player is null when the parry was performed by a non-player entity (e.g. a mob)
  * });
  * }</pre>
  */

@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -104,8 +105,19 @@ public class ParryHandler {
         syncCooldown(blocker);
 
         // Notify other systems (e.g. the KubeJS ParryEvents plugin) about the parry.
+        // The blocker may be a mob (e.g. MobsUseShields shield-wielders), not just a player.
         MinecraftForge.EVENT_BUS.post(new ShieldParriedEvent(
-                (ServerPlayer) blocker, livingAttacker, event.getDamageSource(), event.getBlockedDamage()));
+                blocker, livingAttacker, event.getDamageSource(), event.getBlockedDamage()));
+    }
+
+    /** Mobs never fire PlayerLoggedOutEvent, so clear their state on death to avoid leaking map entries. */
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        if (event.getEntity() instanceof ServerPlayer) return; // players are cleaned up on logout
+        UUID id = event.getEntity().getUUID();
+        RAISED_TICK.remove(id);
+        COOLDOWN_END.remove(id);
     }
 
     /**

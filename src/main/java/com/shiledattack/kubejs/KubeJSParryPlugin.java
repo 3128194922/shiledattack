@@ -31,10 +31,10 @@ public class KubeJSParryPlugin extends KubeJSPlugin {
     }
 
     private static void onShieldParried(ShieldParriedEvent event) {
-        var player = event.getPlayer();
-        if (player == null || player.getServer() == null) return;
+        var blocker = event.getBlocker();
+        if (blocker == null || blocker.getServer() == null) return;
         ParryEvents.PARRY.post(ScriptType.SERVER, new ShieldParriedEventJS(
-                player.getServer(), player, event.getAttacker(),
+                blocker.getServer(), blocker, event.getAttacker(),
                 event.getDamageSource(), event.getBlockedDamage()));
     }
 }
