@@ -1,6 +1,6 @@
 # Shield Auto Attack
 
-一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡、盾反与攻击不打断疾跑/游泳功能。本mod由AI编写。
+一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡、盾反、双手武器限制与攻击不打断疾跑/游泳功能。本mod由AI编写。
 
 ## 参考MOD
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
@@ -231,6 +231,30 @@ public class PlayerMixin extends LivingEntity {
 | 未疾跑时攻击 | 无影响（与原版一致） |
 
 > 服务端侧生效：Mixin 注入两侧，确保单机与多人联机一致。
+
+### 8. 双手武器
+
+物品标签 `shiledattack:is_hands` 标记双手武器。主手持有该标签物品时，副手物品仍留在槽位，但第一人称与第三人称均不显示副手，副手的物品使用、方块交互、实体交互被禁止，也无法按 F 把双手武器换到副手。双手武器若直接放在副手，同样不能通过副手右键使用或交互。
+
+副手物品带有 `shiledattack:can_hands_use` 时是例外：即使主手为双手武器，副手仍可显示和使用。潜行自动举盾、攻击后重新举盾及盾反就绪图标也遵守这条规则。双手武器判定不会移动或删除副手物品，也不涉及副手交替攻击。
+
+两个标签默认均为空，可通过数据包或 KubeJS 的物品标签功能添加。对应文件路径为：
+
+```text
+data/shiledattack/tags/items/is_hands.json
+data/shiledattack/tags/items/can_hands_use.json
+```
+
+例如，将大剑加入 `is_hands.json`：
+
+```json
+{
+  "replace": false,
+  "values": ["yourmod:greatsword"]
+}
+```
+
+需要双手持武器时仍可使用的副手物品，可加入 `can_hands_use.json`。原 `offhandattack:*` 标签不会被本模组读取，迁移数据包时需要改为 `shiledattack:*`。
 
 ## 配置
 

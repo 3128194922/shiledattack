@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.shiledattack.Config;
 import com.shiledattack.ShieldUtil;
 import com.shiledattack.ShiledAttackMod;
+import com.shiledattack.TwoHandedWeapons;
 import com.shiledattack.network.ClientParryState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -55,7 +56,7 @@ public class ParryHudRenderer {
         if (!Config.parryEnabled || !ClientParryState.isReady()) return;
 
         ItemStack offhand = mc.player.getOffhandItem();
-        if (!ShieldUtil.isShield(offhand)) return;
+        if (!ShieldUtil.isShield(offhand) || TwoHandedWeapons.shouldBlockOffhandUse(mc.player, offhand)) return;
 
         int cx = event.getWindow().getGuiScaledWidth() / 2;
         int slotLeft;

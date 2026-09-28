@@ -1,6 +1,7 @@
 package com.shiledattack.client.handler;
 
 import com.shiledattack.Config;
+import com.shiledattack.TwoHandedWeapons;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -32,17 +33,21 @@ public class ShieldAutoHandler {
         return stack.is(SHIELD_TAG);
     }
 
+    private static boolean canUseShield(Minecraft mc, InteractionHand hand) {
+        ItemStack stack = mc.player.getItemInHand(hand);
+        return isShield(stack) && (hand != InteractionHand.OFF_HAND
+                || !TwoHandedWeapons.shouldBlockOffhandUse(mc.player, stack));
+    }
+
     /**
      * 通过 gameMode.useItem 发包举盾，确保服务端同步。
      * 优先副手，其次主手。
      */
     private static void raiseShield(Minecraft mc) {
         if (mc.gameMode == null) return;
-        ItemStack offHand = mc.player.getOffhandItem();
-        ItemStack mainHand = mc.player.getMainHandItem();
-        if (isShield(offHand)) {
+        if (canUseShield(mc, InteractionHand.OFF_HAND)) {
             mc.gameMode.useItem(mc.player, InteractionHand.OFF_HAND);
-        } else if (isShield(mainHand)) {
+        } else if (canUseShield(mc, InteractionHand.MAIN_HAND)) {
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
         }
     }
@@ -53,6 +58,13 @@ public class ShieldAutoHandler {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.screen != null) return;
+
+        // The main hand may have changed while an offhand shield was already raised.
+        if (mc.gameMode != null && mc.player.isUsingItem()
+                && mc.player.getUsedItemHand() == InteractionHand.OFF_HAND
+                && TwoHandedWeapons.shouldBlockOffhandUse(mc.player, mc.player.getOffhandItem())) {
+            mc.gameMode.releaseUsingItem(mc.player);
+        }
 
         // --- Sneak auto-shield with seamless right-click switching ---
         // Phase.START 在原版 handleKeybinds() 之前触发，可在原版处理前调整状态
@@ -166,15 +178,13 @@ public class ShieldAutoHandler {
 
         if (Config.enabled && mc.options.keyUse.isDown()) {
             // 手动按右键路径：客户端本地恢复
-            ItemStack stack = mc.player.getItemInHand(shieldHand);
-            if (isShield(stack)) {
+            if (canUseShield(mc, shieldHand)) {
                 mc.player.startUsingItem(shieldHand);
             } else {
                 InteractionHand otherHand = shieldHand == InteractionHand.OFF_HAND
                         ? InteractionHand.MAIN_HAND
                         : InteractionHand.OFF_HAND;
-                stack = mc.player.getItemInHand(otherHand);
-                if (isShield(stack)) {
+                if (canUseShield(mc, otherHand)) {
                     mc.player.startUsingItem(otherHand);
                 }
             }
