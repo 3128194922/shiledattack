@@ -1,6 +1,7 @@
 package com.shiledattack.kubejs;
 
 import com.shiledattack.event.ShieldParriedEvent;
+import com.shiledattack.combat.ChargeAttackEvent;
 import dev.latvian.mods.kubejs.KubeJSPlugin;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import net.minecraftforge.common.MinecraftForge;
@@ -22,12 +23,25 @@ public class KubeJSParryPlugin extends KubeJSPlugin {
     @Override
     public void registerEvents() {
         ParryEvents.GROUP.register();
+        ChargeAttackEvents.GROUP.register();
     }
 
     private static synchronized void registerForgeListener() {
         if (forgeListenerRegistered) return;
         MinecraftForge.EVENT_BUS.addListener(KubeJSParryPlugin::onShieldParried);
+        MinecraftForge.EVENT_BUS.addListener(KubeJSParryPlugin::onChargeAttack);
         forgeListenerRegistered = true;
+    }
+
+    private static void onChargeAttack(ChargeAttackEvent event) {
+        var player = event.getPlayer();
+        if (player == null || player.getServer() == null) return;
+        var result = ChargeAttackEvents.ATTACKED.post(ScriptType.SERVER,
+                new ChargeAttackEventJS(player.getServer(), event));
+        // KubeJS: cancel() -> INTERRUPT_FALSE，exit() -> INTERRUPT_DEFAULT，两者都视为取消。
+        if (result.interruptFalse() || result.interruptDefault()) {
+            event.setCanceled(true);
+        }
     }
 
     private static void onShieldParried(ShieldParriedEvent event) {

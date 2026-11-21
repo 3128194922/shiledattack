@@ -63,6 +63,70 @@ public class Config {
             .comment("Anvil sound volume played on a successful parry")
             .defineInRange("parrySoundVolume", 1.0, 0.0, 5.0);
 
+    // --- Cone attack (锥形攻击范围) ---
+
+    public static final ForgeConfigSpec.BooleanValue CONE_ATTACK_ENABLED = BUILDER
+            .comment("Enable cone-shaped melee range: one swing also hits extra targets inside the cone,",
+                    "and hold-to-attack picks the nearest entity inside the cone when the crosshair is not on one")
+            .define("coneAttackEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue CONE_REACH = BUILDER
+            .comment("Cone forward reach in blocks (vanilla server rejects attacks beyond 6)")
+            .defineInRange("coneReach", 3.6, 1.0, 6.0);
+
+    public static final ForgeConfigSpec.DoubleValue CONE_HORIZONTAL_ANGLE = BUILDER
+            .comment("Cone half-angle to each side, in degrees")
+            .defineInRange("coneHorizontalAngle", 35.0, 1.0, 89.0);
+
+    public static final ForgeConfigSpec.DoubleValue CONE_VERTICAL_ANGLE = BUILDER
+            .comment("Cone half-angle up and down, in degrees (tighter than horizontal by design)")
+            .defineInRange("coneVerticalAngle", 30.0, 1.0, 89.0);
+
+    public static final ForgeConfigSpec.IntValue CONE_MAX_TARGETS = BUILDER
+            .comment("Maximum bodies one swing can hit, including the aimed one")
+            .defineInRange("coneMaxTargets", 3, 1, 10);
+
+    public static final ForgeConfigSpec.DoubleValue CONE_DAMAGE_MULTIPLIER = BUILDER
+            .comment("Damage multiplier for the extra cone targets (1.0 = same as the aimed target)")
+            .defineInRange("coneDamageMultiplier", 0.6, 0.0, 1.0);
+
+    // --- Attack camera shake (攻击屏幕抖动) ---
+
+    public static final ForgeConfigSpec.BooleanValue ATTACK_SHAKE_ENABLED = BUILDER
+            .comment("Shake the attacker's camera when an attack lands")
+            .define("attackShakeEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue ATTACK_SHAKE_DEGREES = BUILDER
+            .comment("Camera shake amplitude in degrees at point blank")
+            .defineInRange("attackShakeDegrees", 1.6, 0.0, 10.0);
+
+    public static final ForgeConfigSpec.IntValue ATTACK_SHAKE_TICKS = BUILDER
+            .comment("Camera shake duration in ticks")
+            .defineInRange("attackShakeTicks", 5, 1, 40);
+
+    public static final ForgeConfigSpec.DoubleValue ATTACK_SHAKE_REACH = BUILDER
+            .comment("Camera shake reach in blocks; amplitude falls off with the square of the distance")
+            .defineInRange("attackShakeReach", 16.0, 1.0, 128.0);
+
+    // --- Charged attack (蓄力攻击) ---
+
+    public static final ForgeConfigSpec.BooleanValue CHARGE_ATTACK_ENABLED = BUILDER
+            .comment("Enable charged attacks for items tagged shiledattack:charge_attack:",
+                    "hold the left button to charge, release to strike")
+            .define("chargeAttackEnabled", true);
+
+    public static final ForgeConfigSpec.IntValue CHARGE_MIN_HOLD_TICKS = BUILDER
+            .comment("Ticks the button must be held before the swing counts as charged")
+            .defineInRange("chargeMinHoldTicks", 4, 1, 20);
+
+    public static final ForgeConfigSpec.IntValue CHARGE_FULL_TICKS = BUILDER
+            .comment("Ticks of holding needed for a full charge")
+            .defineInRange("chargeFullTicks", 20, 5, 200);
+
+    public static final ForgeConfigSpec.DoubleValue CHARGE_DAMAGE_BONUS = BUILDER
+            .comment("Extra damage multiplier at full charge (1.0 = double damage, 0.0 = no bonus)")
+            .defineInRange("chargeDamageBonus", 1.0, 0.0, 10.0);
+
     public static final ForgeConfigSpec.BooleanValue SPRINT_ATTACKS = BUILDER
             .comment("Attacking will no longer stop the player from sprinting or swimming",
                     "Ported from Combat Nouveau's sprint attacks feature")
@@ -84,6 +148,20 @@ public class Config {
     public static double parryKnockbackMax;
     public static double parryKnockUp;
     public static double parrySoundVolume;
+    public static boolean coneAttackEnabled;
+    public static double coneReach;
+    public static double coneHorizontalAngle;
+    public static double coneVerticalAngle;
+    public static int coneMaxTargets;
+    public static double coneDamageMultiplier;
+    public static boolean attackShakeEnabled;
+    public static double attackShakeDegrees;
+    public static int attackShakeTicks;
+    public static double attackShakeReach;
+    public static boolean chargeAttackEnabled;
+    public static int chargeMinHoldTicks;
+    public static int chargeFullTicks;
+    public static double chargeDamageBonus;
     public static boolean sprintAttacks;
 
     @SubscribeEvent
@@ -102,6 +180,33 @@ public class Config {
         parryKnockbackMax = PARRY_KNOCKBACK_MAX.get();
         parryKnockUp = PARRY_KNOCK_UP.get();
         parrySoundVolume = PARRY_SOUND_VOLUME.get();
+
+        coneAttackEnabled = CONE_ATTACK_ENABLED.get();
+        coneReach = CONE_REACH.get();
+        coneHorizontalAngle = CONE_HORIZONTAL_ANGLE.get();
+        coneVerticalAngle = CONE_VERTICAL_ANGLE.get();
+        coneMaxTargets = CONE_MAX_TARGETS.get();
+        coneDamageMultiplier = CONE_DAMAGE_MULTIPLIER.get();
+
+        attackShakeEnabled = ATTACK_SHAKE_ENABLED.get();
+        attackShakeDegrees = ATTACK_SHAKE_DEGREES.get();
+        attackShakeTicks = ATTACK_SHAKE_TICKS.get();
+        attackShakeReach = ATTACK_SHAKE_REACH.get();
+
+        chargeAttackEnabled = CHARGE_ATTACK_ENABLED.get();
+        chargeMinHoldTicks = CHARGE_MIN_HOLD_TICKS.get();
+        chargeFullTicks = CHARGE_FULL_TICKS.get();
+        chargeDamageBonus = CHARGE_DAMAGE_BONUS.get();
+
         sprintAttacks = SPRINT_ATTACKS.get();
+    }
+
+    /** 当前配置对应的锥形范围。 */
+    public static com.shiledattack.combat.ReachProfile coneProfile() {
+        if (!coneAttackEnabled) {
+            return com.shiledattack.combat.ReachProfile.NONE;
+        }
+        return new com.shiledattack.combat.ReachProfile(
+                (float) coneReach, (float) coneHorizontalAngle, (float) coneVerticalAngle);
     }
 }

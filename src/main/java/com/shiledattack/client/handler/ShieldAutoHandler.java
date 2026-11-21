@@ -2,14 +2,18 @@ package com.shiledattack.client.handler;
 
 import com.shiledattack.Config;
 import com.shiledattack.TwoHandedWeapons;
+import com.shiledattack.combat.ConeTargets;
+import com.shiledattack.combat.ReachProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -134,7 +138,12 @@ public class ShieldAutoHandler {
         // Runs after shield release so the shield is down when the attack fires.
         if (Config.holdAttackButton && mc.options.keyAttack.isDown()
                 && !mc.player.isUsingItem() && mc.gameMode != null) {
-            if (mc.player.getAttackStrengthScale(0.5F) >= 1.0F) {
+            // 蓄力武器由 ChargeInputHandler 接管左键，长按自动攻击必须让路，
+            // 否则同一次按住会既蓄力又连续普通攻击。
+            boolean chargeWeapon = Config.chargeAttackEnabled
+                    && (ChargeInputHandler.isCharging()
+                    || mc.player.getMainHandItem().is(com.shiledattack.combat.ChargeAttackTag.CHARGE_ATTACK));
+            if (!chargeWeapon && mc.player.getAttackStrengthScale(0.5F) >= 1.0F) {
                 ItemStack mainHandItem = mc.player.getMainHandItem();
                 if (mainHandItem.is(AUTO_SWING_TAG)) {
                     // 拥有 auto_swing tag 的武器：冷却满立即挥动，不检测实体
@@ -152,9 +161,25 @@ public class ShieldAutoHandler {
                     mc.gameMode.attack(mc.player, entityHitResult.getEntity());
                     mc.player.swing(InteractionHand.MAIN_HAND);
                     mc.player.resetAttackStrengthTicker();
+                } else if (Config.coneAttackEnabled
+                        && (mc.hitResult == null || mc.hitResult.getType() == HitResult.Type.MISS)) {
+                    // 准星没有指向任何东西时，用锥形范围找最近的目标。
+                    // 指向方块时不动手，避免长按挖掘被锥形攻击打断。
+                    LivingEntity coneTarget = coneTarget(mc);
+                    if (coneTarget != null) {
+                        mc.gameMode.attack(mc.player, coneTarget);
+                        mc.player.swing(InteractionHand.MAIN_HAND);
+                        mc.player.resetAttackStrengthTicker();
+                    }
                 }
             }
         }
+    }
+
+    private static LivingEntity coneTarget(Minecraft mc) {
+        ReachProfile reach = Config.coneProfile();
+        if (reach.isNone()) return null;
+        return ConeTargets.nearest(mc.player.level(), mc.player, reach);
     }
 
     @SubscribeEvent

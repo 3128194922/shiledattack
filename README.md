@@ -5,6 +5,7 @@
 ## 参考MOD
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
 - [combat-nouveau](https://github.com/fuzs/combat-nouveau)：长按攻击机制参考，攻击不打断疾跑参考。
+- [CerebroCanibalus/cortes-combat at port/1.20.1](https://github.com/CerebroCanibalus/cortes-combat/tree/port/1.20.1?tab=GPL-3.0-1-ov-file)：蓄力机制和锥型范围参考
 
 ## 环境要求
 
@@ -256,6 +257,52 @@ data/shiledattack/tags/items/can_hands_use.json
 
 需要双手持武器时仍可使用的副手物品，可加入 `can_hands_use.json`。原 `offhandattack:*` 标签不会被本模组读取，迁移数据包时需要改为 `shiledattack:*`。
 
+### 9. 锥形攻击范围
+
+一次挥击除了命中准星目标外，还会命中前方锥形范围内的其他生物，最多 `coneMaxTargets` 个（含主目标）。
+
+- 锥体跟随视线：抬头能打到头顶，低头能打到脚下
+- 水平 / 垂直半角独立配置，垂直默认更窄
+- 额外目标按距离由近到远结算，伤害为 `主目标最终伤害 × coneDamageMultiplier`
+- 长按攻击时，若准星没有指向任何实体，会在锥形范围内自动索敌最近目标
+- 准星指向方块时不触发锥形索敌，避免打断挖掘
+
+### 10. 攻击屏幕抖动
+
+攻击命中后给攻击者发送相机抖动：幅度随距离平方衰减，叠加总量有上限，避免连续命中时眩晕。
+
+### 11. 蓄力攻击
+
+主手物品带有 `shiledattack:charge_attack` 标签时，**长按左键蓄力，松开左键攻击**。
+
+- 按住低于 `chargeMinHoldTicks` 视为普通点击，不吃蓄力加成
+- 满蓄力时伤害为 `攻击力 × (1 + chargeDamageBonus)`
+- 蓄力比例由**服务端计时**决定，客户端只上报开始/松开，无法伪造满蓄力
+- 蓄力期间会阻止原版持续攻击与挖掘；换武器、打开界面、开始使用物品会放弃蓄力
+- 蓄力攻击同样会触发锥形扩散与屏幕抖动
+
+标签文件位置：`data/shiledattack/tags/items/charge_attack.json`
+
+```json
+{
+  "replace": false,
+  "values": ["yourmod:greatsword"]
+}
+```
+
+**KubeJS 事件（可修改伤害）：**
+
+```js
+ChargeAttackEvents.attacked(event => {
+    // event.player       攻击者（ServerPlayer）
+    // event.target       被攻击目标（空挥时为 null）
+    // event.item         使用的武器
+    // event.chargeRatio  0..1 蓄力比例
+    event.damage *= 1.2   // 修改本次伤害
+    // event.cancel()     // 取消本次伤害
+})
+```
+
 ## 配置
 
 配置文件位于 `config/shiledattack-common.toml`：
@@ -275,6 +322,20 @@ data/shiledattack/tags/items/can_hands_use.json
 | `parryKnockbackMax` | double | `4.0` | 盾反击退的最大水平速度 |
 | `parryKnockUp` | double | `0.35` | 盾反时施加给攻击者的上抛力度 |
 | `parrySoundVolume` | double | `1.0` | 盾反铁砧音效音量 |
+| `coneAttackEnabled` | boolean | `true` | 启用锥形攻击范围 |
+| `coneReach` | double | `3.6` | 锥体前向距离（格，上限 6） |
+| `coneHorizontalAngle` | double | `35.0` | 锥体水平半角（度） |
+| `coneVerticalAngle` | double | `30.0` | 锥体垂直半角（度） |
+| `coneMaxTargets` | int | `3` | 单次挥击最多命中数（含主目标） |
+| `coneDamageMultiplier` | double | `0.6` | 锥形额外目标伤害倍率 |
+| `attackShakeEnabled` | boolean | `true` | 攻击命中时是否抖动屏幕 |
+| `attackShakeDegrees` | double | `1.6` | 抖动幅度（度，近距离） |
+| `attackShakeTicks` | int | `5` | 抖动持续 tick 数 |
+| `attackShakeReach` | double | `16.0` | 抖动生效距离（格） |
+| `chargeAttackEnabled` | boolean | `true` | 启用蓄力攻击 |
+| `chargeMinHoldTicks` | int | `4` | 判定为蓄力的最短按住 tick |
+| `chargeFullTicks` | int | `20` | 满蓄力所需 tick |
+| `chargeDamageBonus` | double | `1.0` | 满蓄力额外伤害倍率（1.0 = 双倍） |
 | `sprintAttacks` | boolean | `true` | 攻击不打断疾跑/游泳状态 |
 
 前四个功能相互独立，可单独开关。`shieldRaiseDelay` 仅在 `shieldDelayOverride=true` 时生效。

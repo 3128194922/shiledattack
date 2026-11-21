@@ -8,6 +8,7 @@
         "PlayerMixin"
     ],
     "client": [
+        "client.MinecraftChargeMixin",
         "TwoHandedFirstPersonMixin",
         "TwoHandedThirdPersonMixin"
     ],

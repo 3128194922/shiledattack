@@ -22,11 +22,43 @@ public class ParryNetwork {
                 ParryCooldownMessage::encode,
                 ParryCooldownMessage::new,
                 ParryCooldownMessage::handle);
+        CHANNEL.registerMessage(1, CameraShakeMessage.class,
+                CameraShakeMessage::encode,
+                CameraShakeMessage::new,
+                CameraShakeMessage::handle);
+        CHANNEL.registerMessage(2, ChargeStartMessage.class,
+                ChargeStartMessage::encode,
+                ChargeStartMessage::new,
+                ChargeStartMessage::handle);
+        CHANNEL.registerMessage(3, ChargeReleaseMessage.class,
+                ChargeReleaseMessage::encode,
+                ChargeReleaseMessage::new,
+                ChargeReleaseMessage::handle);
+        CHANNEL.registerMessage(4, ChargeCancelMessage.class,
+                ChargeCancelMessage::encode,
+                ChargeCancelMessage::new,
+                ChargeCancelMessage::handle);
     }
 
     public static void sendCooldown(ServerPlayer player, int remainingTicks) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new ParryCooldownMessage(remainingTicks));
+    }
+
+    public static void sendShake(ServerPlayer player, CameraShakeMessage message) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+    }
+
+    public static void sendChargeStart() {
+        CHANNEL.sendToServer(new ChargeStartMessage());
+    }
+
+    public static void sendChargeRelease(int targetId, int heldTicks) {
+        CHANNEL.sendToServer(new ChargeReleaseMessage(targetId, heldTicks));
+    }
+
+    public static void sendChargeCancel() {
+        CHANNEL.sendToServer(new ChargeCancelMessage());
     }
 
     @Mod.EventBusSubscriber(modid = ShiledAttackMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
