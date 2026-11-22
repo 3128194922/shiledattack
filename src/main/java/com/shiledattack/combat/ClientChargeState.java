@@ -45,14 +45,12 @@ public final class ClientChargeState {
         return chargingItem;
     }
 
-    /** 当前蓄力比例，供 HUD 与调试使用。 */
+    /** 当前蓄力比例，供 HUD 与调试使用（按开始蓄力时那件武器的档案计算）。 */
     public static float ratio() {
         if (!holding) {
             return 0.0F;
         }
-        return ChargeMath.ratio(heldTicks,
-                (int) com.shiledattack.Config.chargeFullTicks,
-                com.shiledattack.Config.chargeMinHoldTicks);
+        return ChargeProfiles.resolve(chargingItem).ratio(heldTicks);
     }
 
     /** 主手物品是否已不是开始蓄力的那件，用于中途换武器时放弃蓄力。 */

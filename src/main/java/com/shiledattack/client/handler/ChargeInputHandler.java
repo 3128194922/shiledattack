@@ -4,6 +4,7 @@ import com.shiledattack.Config;
 import com.shiledattack.ShiledAttackMod;
 import com.shiledattack.combat.ChargeAttackHandler;
 import com.shiledattack.combat.ChargeAttackTag;
+import com.shiledattack.combat.ChargeProfiles;
 import com.shiledattack.combat.ClientChargeState;
 import com.shiledattack.combat.ConeTargets;
 import com.shiledattack.combat.ReachProfile;
@@ -112,7 +113,7 @@ public final class ChargeInputHandler {
         if (mc.gameMode == null || player.isSpectator()) return false;
         if (player.isUsingItem()) return false;
         ItemStack main = player.getMainHandItem();
-        if (!main.is(ChargeAttackTag.CHARGE_ATTACK)) return false;
+        if (!ChargeProfiles.isChargeable(main)) return false;
         // 指向方块时留给挖掘。
         return mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK;
     }
@@ -123,7 +124,7 @@ public final class ChargeInputHandler {
         if (player == null || mc.screen != null) return false;
         if (!Config.chargeAttackEnabled) return false;
         if (player.isUsingItem() || player.isSpectator()) return false;
-        if (!player.getMainHandItem().is(ChargeAttackTag.CHARGE_ATTACK)) return false;
+        if (!ChargeProfiles.isChargeable(player.getMainHandItem())) return false;
         // 看向方块时属于挖掘，不接管。
         return mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK;
     }

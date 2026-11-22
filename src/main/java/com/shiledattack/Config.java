@@ -127,6 +127,31 @@ public class Config {
             .comment("Extra damage multiplier at full charge (1.0 = double damage, 0.0 = no bonus)")
             .defineInRange("chargeDamageBonus", 1.0, 0.0, 10.0);
 
+    public static final ForgeConfigSpec.IntValue CHARGE_LIGHT_FULL_TICKS = BUILDER
+            .comment("Light tier (shiledattack:charge_attack/light): ticks needed for a full charge")
+            .defineInRange("chargeLightFullTicks", 12, 2, 400);
+
+    public static final ForgeConfigSpec.DoubleValue CHARGE_LIGHT_BONUS = BUILDER
+            .comment("Light tier: extra damage multiplier at full charge")
+            .defineInRange("chargeLightBonus", 0.5, 0.0, 10.0);
+
+    public static final ForgeConfigSpec.IntValue CHARGE_HEAVY_FULL_TICKS = BUILDER
+            .comment("Heavy tier (shiledattack:charge_attack/heavy): ticks needed for a full charge")
+            .defineInRange("chargeHeavyFullTicks", 32, 2, 400);
+
+    public static final ForgeConfigSpec.DoubleValue CHARGE_HEAVY_BONUS = BUILDER
+            .comment("Heavy tier: extra damage multiplier at full charge")
+            .defineInRange("chargeHeavyBonus", 1.8, 0.0, 10.0);
+
+    public static final ForgeConfigSpec.BooleanValue CHARGE_CRITICAL_ENABLED = BUILDER
+            .comment("Allow charged attacks to land a falling critical (jump attack) like vanilla",
+                    "Requires: falling, not flying/riding/swimming/levitating, target is a living entity")
+            .define("chargeCriticalEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue CHARGE_CRITICAL_MULTIPLIER = BUILDER
+            .comment("Damage multiplier applied on a charged falling critical")
+            .defineInRange("chargeCriticalMultiplier", 1.5, 1.0, 10.0);
+
     public static final ForgeConfigSpec.BooleanValue SPRINT_ATTACKS = BUILDER
             .comment("Attacking will no longer stop the player from sprinting or swimming",
                     "Ported from Combat Nouveau's sprint attacks feature")
@@ -162,6 +187,12 @@ public class Config {
     public static int chargeMinHoldTicks;
     public static int chargeFullTicks;
     public static double chargeDamageBonus;
+    public static int chargeLightFullTicks;
+    public static double chargeLightBonus;
+    public static int chargeHeavyFullTicks;
+    public static double chargeHeavyBonus;
+    public static boolean chargeCriticalEnabled;
+    public static double chargeCriticalMultiplier;
     public static boolean sprintAttacks;
 
     @SubscribeEvent
@@ -197,6 +228,12 @@ public class Config {
         chargeMinHoldTicks = CHARGE_MIN_HOLD_TICKS.get();
         chargeFullTicks = CHARGE_FULL_TICKS.get();
         chargeDamageBonus = CHARGE_DAMAGE_BONUS.get();
+        chargeLightFullTicks = CHARGE_LIGHT_FULL_TICKS.get();
+        chargeLightBonus = CHARGE_LIGHT_BONUS.get();
+        chargeHeavyFullTicks = CHARGE_HEAVY_FULL_TICKS.get();
+        chargeHeavyBonus = CHARGE_HEAVY_BONUS.get();
+        chargeCriticalEnabled = CHARGE_CRITICAL_ENABLED.get();
+        chargeCriticalMultiplier = CHARGE_CRITICAL_MULTIPLIER.get();
 
         sprintAttacks = SPRINT_ATTACKS.get();
     }
@@ -208,5 +245,32 @@ public class Config {
         }
         return new com.shiledattack.combat.ReachProfile(
                 (float) coneReach, (float) coneHorizontalAngle, (float) coneVerticalAngle);
+    }
+
+    /** 无标签档位时的默认蓄力属性（全局配置）。 */
+    public static com.shiledattack.combat.ChargeProfile defaultChargeProfile() {
+        if (!chargeAttackEnabled) {
+            return com.shiledattack.combat.ChargeProfile.DISABLED;
+        }
+        return com.shiledattack.combat.ChargeProfile.of(true,
+                chargeMinHoldTicks, chargeFullTicks, (float) chargeDamageBonus);
+    }
+
+    /** 轻档蓄力属性。 */
+    public static com.shiledattack.combat.ChargeProfile lightChargeProfile() {
+        if (!chargeAttackEnabled) {
+            return com.shiledattack.combat.ChargeProfile.DISABLED;
+        }
+        return com.shiledattack.combat.ChargeProfile.of(true,
+                chargeMinHoldTicks, chargeLightFullTicks, (float) chargeLightBonus);
+    }
+
+    /** 重档蓄力属性。 */
+    public static com.shiledattack.combat.ChargeProfile heavyChargeProfile() {
+        if (!chargeAttackEnabled) {
+            return com.shiledattack.combat.ChargeProfile.DISABLED;
+        }
+        return com.shiledattack.combat.ChargeProfile.of(true,
+                chargeMinHoldTicks, chargeHeavyFullTicks, (float) chargeHeavyBonus);
     }
 }

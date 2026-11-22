@@ -18,6 +18,16 @@ public final class ChargeAttackTag {
             Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(ShiledAttackMod.MODID, "charge_attack"));
 
+    /** 轻档：蓄力快、加成低。 */
+    public static final TagKey<Item> LIGHT = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath(ShiledAttackMod.MODID, "charge_attack/light"));
+
+    /** 重档：蓄力慢、加成高。 */
+    public static final TagKey<Item> HEAVY = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath(ShiledAttackMod.MODID, "charge_attack/heavy"));
+
     private ChargeAttackTag() {
     }
 }

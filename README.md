@@ -280,6 +280,9 @@ data/shiledattack/tags/items/can_hands_use.json
 - 蓄力比例由**服务端计时**决定，客户端只上报开始/松开，无法伪造满蓄力
 - 蓄力期间会阻止原版持续攻击与挖掘；换武器、打开界面、开始使用物品会放弃蓄力
 - 蓄力攻击同样会触发锥形扩散与屏幕抖动
+- 蓄力攻击可以触发**跳劈（下落暴击）**：与普通攻击相同的判定条件，倍率由 `chargeCriticalMultiplier` 控制，可用 `chargeCriticalEnabled` 关闭
+
+**蓄力属性优先级（高到低）：** 数据包 JSON → KubeJS 脚本 → 标签档位 → 全局配置。
 
 标签文件位置：`data/shiledattack/tags/items/charge_attack.json`
 
@@ -289,6 +292,67 @@ data/shiledattack/tags/items/can_hands_use.json
   "values": ["yourmod:greatsword"]
 }
 ```
+
+**方式一：数据包逐武器定义（最精确，`/reload` 生效）**
+
+文件路径：`data/<命名空间>/charge_profiles/<物品路径>.json`
+
+例如 `data/minecraft/charge_profiles/diamond_sword.json`：
+
+```json
+{
+  "enabled": true,
+  "min_hold": 4,
+  "full_ticks": 30,
+  "damage_bonus": 1.5
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `enabled` | 是否可蓄力（默认 `true`） |
+| `min_hold` | 最短按住 tick，低于它视为普通点击（默认 `4`） |
+| `full_ticks` | 满蓄力所需 tick（默认 `20`） |
+| `damage_bonus` | 满蓄力额外倍率，`1.5` 表示满蓄力 2.5 倍伤害（默认 `1.0`） |
+
+> JSON 可以覆盖标签判断：即使物品没有 `charge_attack` 标签，只要 JSON 写了
+> `"enabled": true` 也能蓄力；反之 `"enabled": false` 可单独禁用某件武器。
+
+**方式二：KubeJS 启动脚本注册**
+
+```js
+// startup_scripts/charge_profiles.js
+ChargeProfiles.register('cortescombat:greatsword', {
+    min_hold: 4,
+    full_ticks: 30,
+    damage_bonus: 1.5
+})
+
+// 关闭某件武器的蓄力
+ChargeProfiles.register('minecraft:stick', { enabled: false })
+```
+
+**方式三：标签档位（最简）**
+
+在 `charge_attack` 总标签的基础上，再加入以下子标签之一即可套用档位参数：
+
+| 标签 | 默认满蓄力 | 默认加成 |
+|------|-----------|---------|
+| `shiledattack:charge_attack/light` | 12 tick | +0.5（1.5 倍） |
+| `shiledattack:charge_attack/heavy` | 32 tick | +1.8（2.8 倍） |
+
+档位参数可在配置文件中调整：`chargeLightFullTicks`、`chargeLightBonus`、
+`chargeHeavyFullTicks`、`chargeHeavyBonus`。
+
+```json
+{
+  "replace": false,
+  "values": ["yourmod:greatsword"]
+}
+```
+
+> 未加档位标签时，使用全局配置 `chargeFullTicks` / `chargeDamageBonus`。
+> 服务端会把最终解析结果同步给客户端，HUD 与结算始终一致。
 
 **KubeJS 事件（可修改伤害）：**
 
@@ -336,6 +400,12 @@ ChargeAttackEvents.attacked(event => {
 | `chargeMinHoldTicks` | int | `4` | 判定为蓄力的最短按住 tick |
 | `chargeFullTicks` | int | `20` | 满蓄力所需 tick |
 | `chargeDamageBonus` | double | `1.0` | 满蓄力额外伤害倍率（1.0 = 双倍） |
+| `chargeLightFullTicks` | int | `12` | 轻档满蓄力 tick |
+| `chargeLightBonus` | double | `0.5` | 轻档满蓄力额外倍率 |
+| `chargeHeavyFullTicks` | int | `32` | 重档满蓄力 tick |
+| `chargeHeavyBonus` | double | `1.8` | 重档满蓄力额外倍率 |
+| `chargeCriticalEnabled` | boolean | `true` | 蓄力攻击能否触发跳劈（下落暴击） |
+| `chargeCriticalMultiplier` | double | `1.5` | 跳劈伤害倍率 |
 | `sprintAttacks` | boolean | `true` | 攻击不打断疾跑/游泳状态 |
 
 前四个功能相互独立，可单独开关。`shieldRaiseDelay` 仅在 `shieldDelayOverride=true` 时生效。

@@ -19,14 +19,16 @@ public class ChargeAttackEvent extends Event {
     private final LivingEntity target;
     private final ItemStack item;
     private final float chargeRatio;
+    private final ChargeProfile profile;
     private float damage;
 
     public ChargeAttackEvent(ServerPlayer player, LivingEntity target, ItemStack item,
-                             float chargeRatio, float damage) {
+                             float chargeRatio, ChargeProfile profile, float damage) {
         this.player = player;
         this.target = target;
         this.item = item;
         this.chargeRatio = chargeRatio;
+        this.profile = profile;
         this.damage = damage;
     }
 
@@ -45,6 +47,11 @@ public class ChargeAttackEvent extends Event {
     /** 0..1 的蓄力比例。 */
     public float getChargeRatio() {
         return chargeRatio;
+    }
+
+    /** 本次攻击使用的武器蓄力属性。 */
+    public ChargeProfile getProfile() {
+        return profile;
     }
 
     public float getDamage() {

@@ -26,6 +26,11 @@ public class KubeJSParryPlugin extends KubeJSPlugin {
         ChargeAttackEvents.GROUP.register();
     }
 
+    @Override
+    public void registerBindings(dev.latvian.mods.kubejs.script.BindingsEvent event) {
+        event.add("ChargeProfiles", new ChargeProfilesKubeJS());
+    }
+
     private static synchronized void registerForgeListener() {
         if (forgeListenerRegistered) return;
         MinecraftForge.EVENT_BUS.addListener(KubeJSParryPlugin::onShieldParried);

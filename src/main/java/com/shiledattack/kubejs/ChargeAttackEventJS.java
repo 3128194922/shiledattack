@@ -1,6 +1,7 @@
 package com.shiledattack.kubejs;
 
 import com.shiledattack.combat.ChargeAttackEvent;
+import com.shiledattack.combat.ChargeProfile;
 import dev.latvian.mods.kubejs.server.ServerEventJS;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,6 +44,26 @@ public class ChargeAttackEventJS extends ServerEventJS {
     /** 0..1 的蓄力比例。 */
     public float getChargeRatio() {
         return event.getChargeRatio();
+    }
+
+    /** 本次武器的蓄力属性（满蓄力 tick、加成等）。 */
+    public ChargeProfile getProfile() {
+        return event.getProfile();
+    }
+
+    /** 满蓄力所需 tick。 */
+    public int getFullTicks() {
+        return event.getProfile().fullTicks();
+    }
+
+    /** 最短按住 tick。 */
+    public int getMinHoldTicks() {
+        return event.getProfile().minHoldTicks();
+    }
+
+    /** 满蓄力额外伤害倍率。 */
+    public float getDamageBonus() {
+        return event.getProfile().damageBonus();
     }
 
     public float getDamage() {

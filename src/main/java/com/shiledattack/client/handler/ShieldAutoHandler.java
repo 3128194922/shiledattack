@@ -142,7 +142,7 @@ public class ShieldAutoHandler {
             // 否则同一次按住会既蓄力又连续普通攻击。
             boolean chargeWeapon = Config.chargeAttackEnabled
                     && (ChargeInputHandler.isCharging()
-                    || mc.player.getMainHandItem().is(com.shiledattack.combat.ChargeAttackTag.CHARGE_ATTACK));
+                    || com.shiledattack.combat.ChargeProfiles.isChargeable(mc.player.getMainHandItem()));
             if (!chargeWeapon && mc.player.getAttackStrengthScale(0.5F) >= 1.0F) {
                 ItemStack mainHandItem = mc.player.getMainHandItem();
                 if (mainHandItem.is(AUTO_SWING_TAG)) {

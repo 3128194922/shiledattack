@@ -49,7 +49,7 @@ public final class ChargeAttackHandler {
     public static void onStart(ServerPlayer player) {
         if (player == null) return;
         if (!Config.chargeAttackEnabled) return;
-        if (!player.getMainHandItem().is(ChargeAttackTag.CHARGE_ATTACK)) return;
+        if (!ChargeProfiles.isChargeable(player.getMainHandItem())) return;
         START_TICK.put(player.getUUID(),
                 new Start(player.level().getGameTime(), player.level().dimension()));
     }
@@ -71,7 +71,8 @@ public final class ChargeAttackHandler {
         Start start = START_TICK.remove(player.getUUID());
 
         ItemStack item = player.getMainHandItem();
-        if (!item.is(ChargeAttackTag.CHARGE_ATTACK)) return;
+        ChargeProfile profile = ChargeProfiles.resolve(item);
+        if (!profile.enabled()) return;
         if (player.isSpectator() || player.isUsingItem()) return;
 
         long now = player.level().getGameTime();
@@ -84,9 +85,8 @@ public final class ChargeAttackHandler {
             heldTicks = Math.max(0, clientHeldTicks);
         }
 
-        float ratio = ChargeMath.ratio(heldTicks,
-                Config.chargeFullTicks, Config.chargeMinHoldTicks);
-        float multiplier = ChargeMath.multiplier((float) Config.chargeDamageBonus, ratio);
+        float ratio = profile.ratio(heldTicks);
+        float multiplier = profile.multiplier(ratio);
         // 原版点击伤害会随攻击冷却进度衰减：damage = 攻击力 × (0.2 + 冷却² × 0.8)。
         // 蓄力沿用同一公式，让“快速连点”与“满蓄力”之间保持合理的节奏差。
         float cooldownScale = player.getAttackStrengthScale(0.5F);
@@ -104,16 +104,23 @@ public final class ChargeAttackHandler {
         if (target != null) {
             damage += EnchantmentHelper.getDamageBonus(item, target.getMobType()) * scale * multiplier;
         }
+
+        // 跳劈（下落暴击）：与同一次蓄力挥击合并，不再额外触发一次普通攻击。
+        // 这里只负责判定，真正的暴击结算与特效交给原版机制（见下方 hurt 后的 criticalHit）。
+        boolean critical = target != null
+                && Config.chargeCriticalEnabled
+                && isFallingCritical(player, target);
+
         if (target == null || damage <= 0.0F) {
             // 空挥也要让脚本收到事件，方便播放特效/音效。
-            ChargeAttackEvent miss = new ChargeAttackEvent(player, null, item, ratio,
+            ChargeAttackEvent miss = new ChargeAttackEvent(player, null, item, ratio, profile,
                     Math.max(0.0F, damage));
             MinecraftForge.EVENT_BUS.post(miss);
             swingOnly(player);
             return;
         }
 
-        ChargeAttackEvent event = new ChargeAttackEvent(player, target, item, ratio, damage);
+        ChargeAttackEvent event = new ChargeAttackEvent(player, target, item, ratio, profile, damage);
         if (MinecraftForge.EVENT_BUS.post(event)) {
             // 脚本取消伤害，但动作照常播放，避免“点了没反应”。
             swingOnly(player);
@@ -130,11 +137,54 @@ public final class ChargeAttackHandler {
         // 清掉可能残留的原版挥击登记，避免同 tick 内被重复结算一次。
         ConeAttackHandler.clearSwing(player);
         target.invulnerableTime = 0;
-        boolean landed = target.hurt(player.damageSources().playerAttack(player), finalDamage);
+        boolean landed = critical
+                ? criticalHit(player, target, finalDamage)
+                : target.hurt(player.damageSources().playerAttack(player), finalDamage);
         if (landed) {
             ConeAttackHandler.applyConeAndShake(player, target, finalDamage);
         }
         swingOnly(player);
+    }
+
+    /**
+     * 原版跳劈判定条件，与 {@code Player#attack} 保持一致。
+     *
+     * <p>原版字节码里的条件是：{@code fallDistance > 0}、未落地、不在梯子上、
+     * 不在水中、无漂浮效果、非骑乘、目标为生物，并且不处于疾跑状态。</p>
+     */
+    private static boolean isFallingCritical(ServerPlayer player, LivingEntity target) {
+        if (target == null) return false;
+        if (player.fallDistance <= 0.0F) return false;
+        if (player.onGround()) return false;
+        if (player.onClimbable()) return false;
+        if (player.isInWater()) return false;
+        if (player.hasEffect(net.minecraft.world.effect.MobEffects.LEVITATION)) return false;
+        if (player.isPassenger()) return false;
+        // 原版在疾跑时不触发跳劈（疾跑击退与暴击互斥）。
+        return !player.isSprinting();
+    }
+
+    /**
+     * 走原版跳劈的完整结算：先经过 {@code CriticalHitEvent}，命中后调用 {@code Player#crit}
+     * 播放原版粒子与音效。
+     *
+     * <p>这样 {@code morecallback} 的 {@code VanillaCriticalHitEvent} 也会随
+     * {@code CriticalHitEvent} 一起触发，优先级与抑制逻辑都与原版一致。</p>
+     */
+    private static boolean criticalHit(ServerPlayer player, LivingEntity target, float damage) {
+        var criticalEvent = net.minecraftforge.common.ForgeHooks.getCriticalHit(
+                player, target, true, (float) Config.chargeCriticalMultiplier);
+        if (criticalEvent == null) {
+            // 被监听器取消（例如 morecallback 的抑制逻辑），退化为普通伤害。
+            return target.hurt(player.damageSources().playerAttack(player), damage);
+        }
+        float modified = damage * criticalEvent.getDamageModifier();
+        boolean landed = target.hurt(player.damageSources().playerAttack(player), modified);
+        if (landed) {
+            // 原版暴击特效：粒子 + PLAYER_ATTACK_CRIT 音效。
+            player.crit(target);
+        }
+        return landed;
     }
 
     private static void swingOnly(ServerPlayer player) {

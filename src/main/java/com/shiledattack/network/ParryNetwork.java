@@ -38,6 +38,10 @@ public class ParryNetwork {
                 ChargeCancelMessage::encode,
                 ChargeCancelMessage::new,
                 ChargeCancelMessage::handle);
+        CHANNEL.registerMessage(5, ChargeProfileSyncMessage.class,
+                ChargeProfileSyncMessage::encode,
+                ChargeProfileSyncMessage::new,
+                ChargeProfileSyncMessage::handle);
     }
 
     public static void sendCooldown(ServerPlayer player, int remainingTicks) {
@@ -59,6 +63,13 @@ public class ParryNetwork {
 
     public static void sendChargeCancel() {
         CHANNEL.sendToServer(new ChargeCancelMessage());
+    }
+
+    /** 把服务端解析出的逐武器档案推送给单个玩家。 */
+    public static void sendProfiles(ServerPlayer player) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new ChargeProfileSyncMessage(
+                        com.shiledattack.combat.ChargeProfiles.exportConfigured()));
     }
 
     @Mod.EventBusSubscriber(modid = ShiledAttackMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)

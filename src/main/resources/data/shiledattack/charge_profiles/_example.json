@@ -1,0 +1,7 @@
+{
+  "_comment": "示例文件：复制并改名为目标物品的路径，例如 minecraft/diamond_sword.json",
+  "enabled": true,
+  "min_hold": 4,
+  "full_ticks": 30,
+  "damage_bonus": 1.5
+}
