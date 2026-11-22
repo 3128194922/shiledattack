@@ -141,7 +141,13 @@ public final class ChargeAttackHandler {
                 ? criticalHit(player, target, finalDamage)
                 : target.hurt(player.damageSources().playerAttack(player), finalDamage);
         if (landed) {
-            ConeAttackHandler.applyConeAndShake(player, target, finalDamage);
+            // 原版跳劈重击音效：1.20.1 的 Player#crit 只发粒子，
+            // 音效是在 Player#attack 里单独播放的，所以这里必须补上。
+            playHeavyHitSound(player);
+            // 蓄力越满，抖动越大；满蓄力时达到 chargeShakeMultiplier。
+            float shakeScale = 1.0F + (float) ((Config.chargeShakeMultiplier - 1.0) * ratio);
+            ConeAttackHandler.applyConeAndShake(player, target, finalDamage,
+                    Math.max(1.0F, shakeScale));
         }
         swingOnly(player);
     }
@@ -181,10 +187,22 @@ public final class ChargeAttackHandler {
         float modified = damage * criticalEvent.getDamageModifier();
         boolean landed = target.hurt(player.damageSources().playerAttack(player), modified);
         if (landed) {
-            // 原版暴击特效：粒子 + PLAYER_ATTACK_CRIT 音效。
+            // 原版暴击粒子（音效由公共路径统一播放）。
             player.crit(target);
         }
         return landed;
+    }
+
+    /**
+     * 蓄力攻击命中音效：原版 {@code minecraft:entity.player.attack.crit}。
+     *
+     * <p>1.20.1 的 {@code Player#crit} 只发送暴击粒子，音效是在 {@code Player#attack}
+     * 里单独播放的，蓄力路径绕过了那段代码，所以必须在这里补上同名事件。</p>
+     */
+    private static void playHeavyHitSound(ServerPlayer player) {
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     private static void swingOnly(ServerPlayer player) {

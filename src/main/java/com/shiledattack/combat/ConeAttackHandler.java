@@ -86,12 +86,24 @@ public final class ConeAttackHandler {
      * @param amount 主目标已经承受的伤害
      */
     public static void applyConeAndShake(Player player, LivingEntity target, float amount) {
+        applyConeAndShake(player, target, amount, 1.0F);
+    }
+
+    /**
+     * 同上，但允许调用方放大抖动幅度（蓄力攻击用）。
+     *
+     * @param shakeScale 抖动倍率，1.0 表示普通攻击
+     */
+    public static void applyConeAndShake(Player player, LivingEntity target, float amount,
+                                         float shakeScale) {
         if (amount <= 0.0F) return;
 
         if (Config.attackShakeEnabled && player instanceof ServerPlayer server) {
+            float degrees = (float) (Config.attackShakeDegrees
+                    * Math.max(0.0F, shakeScale));
             ParryNetwork.sendShake(server, new CameraShakeMessage(
                     target.getX(), target.getY(), target.getZ(),
-                    (float) Config.attackShakeDegrees,
+                    degrees,
                     Config.attackShakeTicks,
                     (float) Config.attackShakeReach));
         }

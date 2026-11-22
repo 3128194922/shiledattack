@@ -266,6 +266,7 @@ data/shiledattack/tags/items/can_hands_use.json
 - 额外目标按距离由近到远结算，伤害为 `主目标最终伤害 × coneDamageMultiplier`
 - 长按攻击时，若准星没有指向任何实体，会在锥形范围内自动索敌最近目标
 - 准星指向方块时不触发锥形索敌，避免打断挖掘
+- 准星处绘制锥形范围指示器：两侧括号落在锥体边缘，渐变条表示蓄力进度（攻击间隔仍由原版准星指示条显示）
 
 ### 10. 攻击屏幕抖动
 
@@ -281,6 +282,7 @@ data/shiledattack/tags/items/can_hands_use.json
 - 蓄力期间会阻止原版持续攻击与挖掘；换武器、打开界面、开始使用物品会放弃蓄力
 - 蓄力攻击同样会触发锥形扩散与屏幕抖动
 - 蓄力攻击可以触发**跳劈（下落暴击）**：与普通攻击相同的判定条件，倍率由 `chargeCriticalMultiplier` 控制，可用 `chargeCriticalEnabled` 关闭
+- 蓄力命中会播放原版音效 `minecraft:entity.player.attack.crit`，并按蓄力比例放大屏幕抖动
 
 **蓄力属性优先级（高到低）：** 数据包 JSON → KubeJS 脚本 → 标签档位 → 全局配置。
 
@@ -396,6 +398,7 @@ ChargeAttackEvents.attacked(event => {
 | `attackShakeDegrees` | double | `1.6` | 抖动幅度（度，近距离） |
 | `attackShakeTicks` | int | `5` | 抖动持续 tick 数 |
 | `attackShakeReach` | double | `16.0` | 抖动生效距离（格） |
+| `chargeShakeMultiplier` | double | `1.8` | 满蓄力时的抖动倍率（1.0 = 与普通攻击相同） |
 | `chargeAttackEnabled` | boolean | `true` | 启用蓄力攻击 |
 | `chargeMinHoldTicks` | int | `4` | 判定为蓄力的最短按住 tick |
 | `chargeFullTicks` | int | `20` | 满蓄力所需 tick |

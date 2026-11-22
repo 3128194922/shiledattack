@@ -108,6 +108,10 @@ public class Config {
             .comment("Camera shake reach in blocks; amplitude falls off with the square of the distance")
             .defineInRange("attackShakeReach", 16.0, 1.0, 128.0);
 
+    public static final ForgeConfigSpec.DoubleValue CHARGE_SHAKE_MULTIPLIER = BUILDER
+            .comment("Camera shake multiplier for charged attacks at full charge (1.0 = same as a normal hit)")
+            .defineInRange("chargeShakeMultiplier", 1.8, 1.0, 6.0);
+
     // --- Charged attack (蓄力攻击) ---
 
     public static final ForgeConfigSpec.BooleanValue CHARGE_ATTACK_ENABLED = BUILDER
@@ -183,6 +187,7 @@ public class Config {
     public static double attackShakeDegrees;
     public static int attackShakeTicks;
     public static double attackShakeReach;
+    public static double chargeShakeMultiplier;
     public static boolean chargeAttackEnabled;
     public static int chargeMinHoldTicks;
     public static int chargeFullTicks;
@@ -223,6 +228,7 @@ public class Config {
         attackShakeDegrees = ATTACK_SHAKE_DEGREES.get();
         attackShakeTicks = ATTACK_SHAKE_TICKS.get();
         attackShakeReach = ATTACK_SHAKE_REACH.get();
+        chargeShakeMultiplier = CHARGE_SHAKE_MULTIPLIER.get();
 
         chargeAttackEnabled = CHARGE_ATTACK_ENABLED.get();
         chargeMinHoldTicks = CHARGE_MIN_HOLD_TICKS.get();
