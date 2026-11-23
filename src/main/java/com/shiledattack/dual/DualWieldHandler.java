@@ -6,14 +6,17 @@ import com.shiledattack.ShiledAttackMod;
 import com.shiledattack.mixin.LivingEntityTickerAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -201,14 +204,24 @@ public final class DualWieldHandler {
         LivingEntityTickerAccess ticker = (LivingEntityTickerAccess) (Object) player;
         int savedTicker = ticker.shiledattack$getAttackStrengthTicker();
 
-        DualWieldState.begin(off, strengthScale);
+        DualWieldState.begin(player, off, strengthScale);
         try {
             // 主副手武器共用同一组属性修饰符 UUID，必须先摘主手再挂副手
             attributes.removeAttributeModifiers(mainMods);
             attributes.addTransientAttributeModifiers(offMods);
             // 主手那一击已经把无敌帧拉到 20，这里清零才能让副手伤害真正落下
             target.invulnerableTime = 0;
+
+            float healthBefore = target.getHealth();
+            float absorptionBefore = target.getAbsorptionAmount();
             player.attack(target);
+            boolean landed = target.getHealth() < healthBefore - 1.0E-4F
+                    || target.getAbsorptionAmount() < absorptionBefore - 1.0E-4F;
+            if (!landed) {
+                // 兜底：部分模组会在 AttackEntityEvent 里取消攻击，或由物品自行处理点击，
+                // 导致原版攻击管线没有真正掉血。这里用副手武器属性直接补一次伤害。
+                applyFallbackDamage(player, target, off, strengthScale);
+            }
         } finally {
             attributes.removeAttributeModifiers(offMods);
             attributes.addTransientAttributeModifiers(mainMods);
@@ -219,6 +232,26 @@ public final class DualWieldHandler {
 
         // 副手武器碎裂的广播已由 LivingEntityBreakEventMixin 重定向，这里不再重复播放
         DualWieldSwings.broadcast(player);
+    }
+
+    /**
+     * 副手一击的伤害兜底，只在原版攻击管线没有真正掉血时调用。
+     *
+     * <p>公式与原版 {@code Player#attack} 保持一致：攻击力 × 冷却倍率 + 附魔加成。
+     * 调用时主手属性仍被替换为副手，因此读到的攻击力就是副手武器的。</p>
+     */
+    private static void applyFallbackDamage(ServerPlayer player, LivingEntity target,
+                                            ItemStack off, float strengthScale) {
+        if (!target.isAlive() || target.isDeadOrDying()) return;
+
+        float scale = Mth.clamp(strengthScale, 0.0F, 1.0F);
+        float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        damage *= 0.2F + scale * scale * 0.8F;
+        damage += EnchantmentHelper.getDamageBonus(off, target.getMobType()) * scale;
+        if (damage <= 0.0F) return;
+
+        target.invulnerableTime = 0;
+        target.hurt(player.damageSources().playerAttack(player), damage);
     }
 
     @SubscribeEvent

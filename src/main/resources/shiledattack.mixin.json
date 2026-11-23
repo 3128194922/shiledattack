@@ -7,6 +7,8 @@
         "MixinTicksConst",
         "LivingEntityTickerAccess",
         "LivingEntityBreakEventMixin",
+        "DualWieldLivingEntityMixin",
+        "OffhandSlotMixin",
         "PlayerMixin"
     ],
     "client": [

@@ -296,6 +296,29 @@ Tag 文件位置：`data/shiledattack/tags/items/dual_wield.json`
 
 > 与双手武器（`is_hands`）互斥：双手武器会隐藏并禁用副手，两者不要同时加在同一件物品上。
 
+### 8.6 禁止放入副手（Offhand Block Tag）
+
+物品标签 `shiledattack:cannot_equip_offhand` 用于禁止指定物品进入副手栏位。带该标签的物品：
+
+- 按 F 时不会与副手交换
+- 无法通过背包界面点击、拖拽或快捷栏数字键放入副手槽
+- 无法在背包中 Shift 快速移动到副手槽
+
+该限制只作用于玩家的副手栏位，不影响主手、快捷栏、物品栏、盔甲栏与容器槽位。标签默认留空，可通过数据包或 KubeJS 添加：
+
+```text
+data/shiledattack/tags/items/cannot_equip_offhand.json
+```
+
+```json
+{
+  "replace": false,
+  "values": ["yourmod:example_item"]
+}
+```
+
+> 说明：该标签不拦截 `/item replace` 等直接写入副手槽的命令或模组 API，只保证正常游戏交互无法放入。
+
 ### 9. 锥形攻击范围
 
 一次挥击除了命中准星目标外，还会命中前方锥形范围内的其他生物，最多 `coneMaxTargets` 个（含主目标）。
@@ -538,6 +561,8 @@ src/main/java/com/shiledattack/
 ├── ShiledAttackMod.java                  # 模组主类，注册配置
 ├── Config.java                           # Forge 配置定义（含盾反配置）
 ├── ShiledAttackTags.java                 # 数据驱动 damage_type tag（unparryable）
+├── OffhandRestrictions.java              # 禁止放入副手栏位的物品 tag 判定
+├── OffhandRestrictionEvents.java         # 拦截 F 键主副手交换
 ├── ParryHandler.java                     # 服务端盾反逻辑（触发判定/击退/冷却/音效）
 ├── ShieldUtil.java                       # 盾牌物品 tag 检测工具
 ├── event/
@@ -559,6 +584,7 @@ src/main/java/com/shiledattack/
 │   └── ClientParryState.java             # 客户端冷却状态缓存
 └── mixin/
     ├── MixinTicksConst.java              # 取消盾牌举起 5 tick 延迟（@ModifyConstant）
+    ├── OffhandSlotMixin.java             # 禁止受限物品进入副手槽（Slot#mayPlace）
     ├── PlayerMixin.java                  # 攻击不打断疾跑/游泳（移植自 combat-nouveau）
     └── client/
         └── PlantPiercingPickMixin.java   # 穿草攻击：GameRenderer#pick 结束后重选实体
@@ -569,7 +595,8 @@ src/main/resources/
 ├── data/shiledattack/tags/damage_type/
 │   └── unparryable.json                  # 无法盾反的伤害类型 tag（数据驱动）
 ├── data/shiledattack/tags/items/
-│   └── attack_through_plants.json        # 可穿草攻击的物品 tag（默认留空）
+│   ├── attack_through_plants.json        # 可穿草攻击的物品 tag（默认留空）
+│   └── cannot_equip_offhand.json         # 禁止放入副手栏位的物品 tag（默认留空）
 ├── data/shiledattack/tags/blocks/
 │   └── pierceable_plants.json            # 额外可穿透的方块 tag（默认留空）
 ├── assets/shiledattack/textures/gui/

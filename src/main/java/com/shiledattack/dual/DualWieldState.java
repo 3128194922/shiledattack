@@ -1,6 +1,7 @@
 package com.shiledattack.dual;
 
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * 服务端瞬态状态：仅在副手追击执行期间生效。
@@ -14,12 +15,22 @@ public final class DualWieldState {
     private static ItemStack activeWeapon = ItemStack.EMPTY;
     private static boolean inProgress = false;
     private static float attackStrengthScale = 1.0F;
+    private static LivingEntity activeOwner;
 
     private DualWieldState() {
     }
 
     public static ItemStack getActiveWeapon() {
         return activeWeapon;
+    }
+
+    /**
+     * 仅当 {@code entity} 是当前正在执行副手追击的玩家时返回副手武器。
+     *
+     * <p>{@code getMainHandItem} 是高频方法，这里用引用比较而不是 UUID 查询。</p>
+     */
+    public static ItemStack getActiveWeaponFor(LivingEntity entity) {
+        return inProgress && entity == activeOwner ? activeWeapon : ItemStack.EMPTY;
     }
 
     public static boolean isOffhandAttackInProgress() {
@@ -37,7 +48,8 @@ public final class DualWieldState {
         return attackStrengthScale;
     }
 
-    public static void begin(ItemStack offhandWeapon, float strengthScale) {
+    public static void begin(LivingEntity owner, ItemStack offhandWeapon, float strengthScale) {
+        activeOwner = owner;
         activeWeapon = offhandWeapon;
         attackStrengthScale = strengthScale;
         inProgress = true;
@@ -46,6 +58,7 @@ public final class DualWieldState {
     public static void end() {
         activeWeapon = ItemStack.EMPTY;
         attackStrengthScale = 1.0F;
+        activeOwner = null;
         inProgress = false;
     }
 }
