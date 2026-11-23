@@ -5,6 +5,8 @@
     "compatibilityLevel": "JAVA_17",
     "mixins": [
         "MixinTicksConst",
+        "LivingEntityTickerAccess",
+        "LivingEntityBreakEventMixin",
         "PlayerMixin"
     ],
     "client": [

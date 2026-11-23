@@ -11,7 +11,8 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class ParryNetwork {
-    private static final String VERSION = "1";
+    /** 新增双持副手挥击包后提升协议版本，避免旧客户端静默丢包。 */
+    private static final String VERSION = "2";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(ShiledAttackMod.MODID, "parry"),
@@ -42,6 +43,10 @@ public class ParryNetwork {
                 ChargeProfileSyncMessage::encode,
                 ChargeProfileSyncMessage::new,
                 ChargeProfileSyncMessage::handle);
+        CHANNEL.registerMessage(6, OffhandSwingMessage.class,
+                OffhandSwingMessage::encode,
+                OffhandSwingMessage::new,
+                OffhandSwingMessage::handle);
     }
 
     public static void sendCooldown(ServerPlayer player, int remainingTicks) {

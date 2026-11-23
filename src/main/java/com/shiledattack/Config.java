@@ -161,6 +161,20 @@ public class Config {
                     "Ported from Combat Nouveau's sprint attacks feature")
             .define("sprintAttacks", true);
 
+    // --- Dual wield (双持武器) ---
+
+    public static final ForgeConfigSpec.BooleanValue DUAL_WIELD_ENABLED = BUILDER
+            .comment("Enable dual wield follow-up: when the main hand item is tagged",
+                    "shiledattack:dual_wield, one attack also strikes with the offhand weapon")
+            .define("dualWieldEnabled", true);
+
+    public static final ForgeConfigSpec.IntValue DUAL_WIELD_OFFHAND_DELAY_TICKS = BUILDER
+            .comment("Ticks between the main hand hit and the offhand follow-up hit",
+                    "Vanilla animates only one arm at a time, so the offhand swing starts",
+                    "when the main hand swing finishes: 6 keeps both animations complete.",
+                    "Lower values cut the main hand animation short; 0 lands both in one tick")
+            .defineInRange("dualWieldOffhandDelayTicks", 6, 0, 20);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
@@ -199,6 +213,8 @@ public class Config {
     public static boolean chargeCriticalEnabled;
     public static double chargeCriticalMultiplier;
     public static boolean sprintAttacks;
+    public static boolean dualWieldEnabled;
+    public static int dualWieldOffhandDelayTicks;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -242,6 +258,9 @@ public class Config {
         chargeCriticalMultiplier = CHARGE_CRITICAL_MULTIPLIER.get();
 
         sprintAttacks = SPRINT_ATTACKS.get();
+
+        dualWieldEnabled = DUAL_WIELD_ENABLED.get();
+        dualWieldOffhandDelayTicks = DUAL_WIELD_OFFHAND_DELAY_TICKS.get();
     }
 
     /** 当前配置对应的锥形范围。 */

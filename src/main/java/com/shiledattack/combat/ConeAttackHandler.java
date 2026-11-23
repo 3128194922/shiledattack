@@ -53,6 +53,8 @@ public final class ConeAttackHandler {
     public static void onAttackEntity(AttackEntityEvent event) {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
+        // 双持副手追击由 DualWieldHandler 独立结算，不再扩散锥形与抖动
+        if (com.shiledattack.dual.DualWieldState.isOffhandAttackInProgress()) return;
         if (!(event.getTarget() instanceof LivingEntity)) return;
         PENDING.put(player.getUUID(),
                 new Pending(event.getTarget().getId(), player.level().getGameTime()));

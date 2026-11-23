@@ -141,6 +141,8 @@ public final class ChargeAttackHandler {
                 ? criticalHit(player, target, finalDamage)
                 : target.hurt(player.damageSources().playerAttack(player), finalDamage);
         if (landed) {
+            // 蓄力路径直接调用 hurt，不经过 AttackEntityEvent，这里主动排入双持副手追击
+            com.shiledattack.dual.DualWieldHandler.scheduleAfterConfirmedHit(player, target, scale);
             // 原版跳劈重击音效：1.20.1 的 Player#crit 只发粒子，
             // 音效是在 Player#attack 里单独播放的，所以这里必须补上。
             playHeavyHitSound(player);

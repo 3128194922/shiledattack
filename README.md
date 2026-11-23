@@ -6,6 +6,8 @@
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
 - [combat-nouveau](https://github.com/fuzs/combat-nouveau)：长按攻击机制参考，攻击不打断疾跑参考。
 - [CerebroCanibalus/cortes-combat at port/1.20.1](https://github.com/CerebroCanibalus/cortes-combat/tree/port/1.20.1?tab=GPL-3.0-1-ov-file)：蓄力机制和锥型范围参考
+- https://github.com/ZsoltMolnarrr/BetterCombat/tree/1.20.1：双手武器实现参考
+- https://github.com/BunnyCinnamon/OffHandCombat：双持武器实现参考
 
 ## 环境要求
 
@@ -257,6 +259,42 @@ data/shiledattack/tags/items/can_hands_use.json
 
 需要双手持武器时仍可使用的副手物品，可加入 `can_hands_use.json`。原 `offhandattack:*` 标签不会被本模组读取，迁移数据包时需要改为 `shiledattack:*`。
 
+### 8.5 双持武器
+
+主手物品带有 `shiledattack:dual_wield` 标签时，一次左键攻击会在命中后追加一次副手攻击：先结算主手武器的伤害，再以副手武器重放一次原版攻击，因此**两次伤害分别来自主手与副手武器**，附魔、暴击、击退、耐久消耗与音效都与原版一致。
+
+**触发条件：**
+
+- 主手物品带 `shiledattack:dual_wield` 标签
+- 副手物品能提供攻击力（空手、火把、盾牌等不会触发）
+- 主手这一击确实造成了伤害（被格挡、无敌帧吃掉或被其它模组取消时不追加）
+
+**时序：** 默认主手命中后 6 tick 结算副手一击。原版同一时刻只能播放一只手臂的挥击动画（`swingingArm` 是单值），主手挥击正好 6 tick，因此等它播完再切到副手，两段动画都完整；改小会截断主手动画，改为 0 则两击同一 tick 结算、只看到一次挥动。
+
+**动画：** 副手一击会强制播放副手挥击动画。第一人称由 `ItemInHandRenderer` 读取 `swingingArm` 决定播放哪只手，第三人称由 `HumanoidModel#setupAttackAnimation` 读取同一字段，两者都会正常播放。由于原版 `LivingEntity#swing` 有“挥到一半不许重开”的限制，副手动画通过自定义包 `OffhandSwingMessage` 直接写入挥击状态，不依赖原版 animate 包。
+
+**与其它功能的关系：**
+
+- 副手一击沿用主手那一击的攻击冷却比例：既不因延迟而衰减成残废伤害，也不会让快速连点变成白送伤害
+- 副手一击不重复结算锥形扩散与屏幕抖动，避免一次左键抖动两次
+- 蓄力攻击同样会追加副手一击
+- 副手武器在攻击中被打碎时，碎裂动画与音效落在副手而非主手
+- 双持不会移动或交换主副手物品，两件武器始终留在各自槽位
+
+Tag 文件位置：`data/shiledattack/tags/items/dual_wield.json`
+
+```json
+{
+  "replace": false,
+  "values": [
+    "yourmod:dual_blade",
+    "minecraft:iron_sword"
+  ]
+}
+```
+
+> 与双手武器（`is_hands`）互斥：双手武器会隐藏并禁用副手，两者不要同时加在同一件物品上。
+
 ### 9. 锥形攻击范围
 
 一次挥击除了命中准星目标外，还会命中前方锥形范围内的其他生物，最多 `coneMaxTargets` 个（含主目标）。
@@ -410,6 +448,8 @@ ChargeAttackEvents.attacked(event => {
 | `chargeCriticalEnabled` | boolean | `true` | 蓄力攻击能否触发跳劈（下落暴击） |
 | `chargeCriticalMultiplier` | double | `1.5` | 跳劈伤害倍率 |
 | `sprintAttacks` | boolean | `true` | 攻击不打断疾跑/游泳状态 |
+| `dualWieldEnabled` | boolean | `true` | 启用双持武器：主手带 `dual_wield` 标签时追加副手攻击 |
+| `dualWieldOffhandDelayTicks` | int | `6` | 主手命中后延迟多少 tick 结算副手一击（6 = 等主手挥击播完，0 = 同 tick） |
 
 前四个功能相互独立，可单独开关。`shieldRaiseDelay` 仅在 `shieldDelayOverride=true` 时生效。
 盾反相关配置仅需 `parryEnabled=true` 即生效；`parryWindowTicks` 单位为 tick，`parryCooldownSeconds` 单位为秒。
