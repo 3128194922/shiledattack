@@ -175,6 +175,14 @@ public class Config {
                     "Lower values cut the main hand animation short; 0 lands both in one tick")
             .defineInRange("dualWieldOffhandDelayTicks", 6, 0, 20);
 
+    // --- Attack through plants (穿草攻击) ---
+
+    public static final ForgeConfigSpec.BooleanValue PIERCE_PLANTS_ENABLED = BUILDER
+            .comment("Let the crosshair target entities behind grass and similar plants",
+                    "when the held item is tagged shiledattack:attack_through_plants",
+                    "Only entity targeting changes; block breaking still works as vanilla")
+            .define("piercePlantsEnabled", true);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
@@ -215,6 +223,7 @@ public class Config {
     public static boolean sprintAttacks;
     public static boolean dualWieldEnabled;
     public static int dualWieldOffhandDelayTicks;
+    public static boolean piercePlantsEnabled;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -261,6 +270,8 @@ public class Config {
 
         dualWieldEnabled = DUAL_WIELD_ENABLED.get();
         dualWieldOffhandDelayTicks = DUAL_WIELD_OFFHAND_DELAY_TICKS.get();
+
+        piercePlantsEnabled = PIERCE_PLANTS_ENABLED.get();
     }
 
     /** 当前配置对应的锥形范围。 */

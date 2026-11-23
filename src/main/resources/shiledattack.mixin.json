@@ -12,6 +12,7 @@
     "client": [
         "client.ChargeViewMixin",
         "client.MinecraftChargeMixin",
+        "client.PlantPiercingPickMixin",
         "TwoHandedFirstPersonMixin",
         "TwoHandedThirdPersonMixin"
     ],

@@ -1,6 +1,6 @@
 # Shield Auto Attack
 
-一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡、盾反、双手武器限制与攻击不打断疾跑/游泳功能。本mod由AI编写。
+一个 Minecraft Forge 模组，提供盾牌自动收放、长按自动攻击、盾牌瞬时格挡、盾反、双手武器限制、穿草攻击与攻击不打断疾跑/游泳功能。本mod由AI编写。
 
 ## 参考MOD
 - [responsive-shields](https://github.com/Revvilo/responsive-shields/tree/1.18.x-1.20.4?tab=License-1-ov-file)：盾牌举起延迟 Mixin 实现参考
@@ -8,6 +8,7 @@
 - [CerebroCanibalus/cortes-combat at port/1.20.1](https://github.com/CerebroCanibalus/cortes-combat/tree/port/1.20.1?tab=GPL-3.0-1-ov-file)：蓄力机制和锥型范围参考
 - https://github.com/ZsoltMolnarrr/BetterCombat/tree/1.20.1：双手武器实现参考
 - https://github.com/BunnyCinnamon/OffHandCombat：双持武器实现参考
+- [Exoneration/CleanCut: Fight enemies back through grass and other similar obstructions!](https://github.com/Exoneration/CleanCut)：穿草攻击
 
 ## 环境要求
 
@@ -407,6 +408,47 @@ ChargeAttackEvents.attacked(event => {
 })
 ```
 
+### 12. 穿草攻击（Attack Through Plants）
+
+玩家手持带 `shiledattack:attack_through_plants` 标签的物品时，攻击准星可以穿过草、花等植物，直接选中并攻击植物后面的生物。
+
+- 只影响**实体选中**：准星后面没有实体时，仍然正常对着植物挖掘，方块破坏逻辑不变
+- 支持原版草、高草、蕨、花、树苗、作物、甘蔗、竹子、藤蔓等常见植物
+- 服务端原版只校验攻击距离、不做视线遮挡检查，因此该功能为纯客户端改动
+- 主手或副手带标签均可触发（兼容双持副手追击）
+
+Tag 文件位置：`data/shiledattack/tags/items/attack_through_plants.json`
+
+```json
+{
+  "replace": false,
+  "values": [
+    "minecraft:diamond_sword",
+    "mymod:skill_sword"
+  ]
+}
+```
+
+也可以用 KubeJS 动态添加（`server_scripts`）：
+
+```js
+ServerEvents.tags('item', event => {
+    event.add('shiledattack:attack_through_plants', 'minecraft:diamond_sword')
+})
+```
+
+模组植物如果没继承原版 `BushBlock`，可以额外加入方块标签
+`data/shiledattack/tags/blocks/pierceable_plants.json`，使其也能被穿过：
+
+```json
+{
+  "replace": false,
+  "values": [
+    "mymod:tall_custom_grass"
+  ]
+}
+```
+
 ## 配置
 
 配置文件位于 `config/shiledattack-common.toml`：
@@ -450,6 +492,7 @@ ChargeAttackEvents.attacked(event => {
 | `sprintAttacks` | boolean | `true` | 攻击不打断疾跑/游泳状态 |
 | `dualWieldEnabled` | boolean | `true` | 启用双持武器：主手带 `dual_wield` 标签时追加副手攻击 |
 | `dualWieldOffhandDelayTicks` | int | `6` | 主手命中后延迟多少 tick 结算副手一击（6 = 等主手挥击播完，0 = 同 tick） |
+| `piercePlantsEnabled` | boolean | `true` | 启用穿草攻击：手持带 `attack_through_plants` 标签的物品时准星可穿过植物选中实体 |
 
 前四个功能相互独立，可单独开关。`shieldRaiseDelay` 仅在 `shieldDelayOverride=true` 时生效。
 盾反相关配置仅需 `parryEnabled=true` 即生效；`parryWindowTicks` 单位为 tick，`parryCooldownSeconds` 单位为秒。
@@ -499,6 +542,8 @@ src/main/java/com/shiledattack/
 ├── ShieldUtil.java                       # 盾牌物品 tag 检测工具
 ├── event/
 │   └── ShieldParriedEvent.java           # 盾反触发时广播的自定义 Forge 事件
+├── combat/
+│   └── PlantPiercing.java                # 穿草攻击的物品/方块标签与植物判定
 ├── kubejs/
 │   ├── KubeJSParryPlugin.java            # KubeJS 插件（注册事件组并转发 Forge 盾反事件）
 │   ├── ParryEvents.java                  # KubeJS 事件组（ParryEvents.parried）
@@ -506,20 +551,27 @@ src/main/java/com/shiledattack/
 ├── client/
 │   └── handler/
 │       ├── ShieldAutoHandler.java        # 客户端核心逻辑（自动收放/长按攻击/潜行举盾）
-│       └── ParryHudRenderer.java         # 客户端 HUD 盾反就绪图标渲染
+│       ├── ParryHudRenderer.java         # 客户端 HUD 盾反就绪图标渲染
+│       └── PlantPiercingPick.java        # 穿草攻击：植物后实体的准星重算
 ├── network/
 │   ├── ParryNetwork.java                 # SimpleChannel 网络通道与包注册
 │   ├── ParryCooldownMessage.java         # 冷却剩余时间同步包
 │   └── ClientParryState.java             # 客户端冷却状态缓存
 └── mixin/
     ├── MixinTicksConst.java              # 取消盾牌举起 5 tick 延迟（@ModifyConstant）
-    └── PlayerMixin.java                  # 攻击不打断疾跑/游泳（移植自 combat-nouveau）
+    ├── PlayerMixin.java                  # 攻击不打断疾跑/游泳（移植自 combat-nouveau）
+    └── client/
+        └── PlantPiercingPickMixin.java   # 穿草攻击：GameRenderer#pick 结束后重选实体
 
 src/main/resources/
 ├── shiledattack.mixin.json               # Mixin 配置（声明 Mixin 类与 refmap）
 ├── kubejs.plugins.txt                    # 声明 KubeJS 插件类（懒加载，可选）
 ├── data/shiledattack/tags/damage_type/
 │   └── unparryable.json                  # 无法盾反的伤害类型 tag（数据驱动）
+├── data/shiledattack/tags/items/
+│   └── attack_through_plants.json        # 可穿草攻击的物品 tag（默认留空）
+├── data/shiledattack/tags/blocks/
+│   └── pierceable_plants.json            # 额外可穿透的方块 tag（默认留空）
 ├── assets/shiledattack/textures/gui/
 │   └── parry_shield.png                  # 盾反 HUD 图标
 └── META-INF/
