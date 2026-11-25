@@ -171,7 +171,7 @@ public final class ChargeInputHandler {
             return hit.getEntity().getId();
         }
         if (Config.coneAttackEnabled) {
-            ReachProfile reach = Config.coneProfile();
+            ReachProfile reach = Config.coneProfile(player);
             if (!reach.isNone()) {
                 LivingEntity cone = ConeTargets.nearest(player.level(), player, reach);
                 if (cone != null) {

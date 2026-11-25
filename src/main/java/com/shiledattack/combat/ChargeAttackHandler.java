@@ -228,9 +228,10 @@ public final class ChargeAttackHandler {
      * 多留一格容差，抵消网络延迟带来的位置误差。
      */
     private static boolean withinReach(ServerPlayer player, LivingEntity target) {
-        com.shiledattack.combat.ReachProfile reach = Config.coneProfile();
+        com.shiledattack.combat.ReachProfile reach = Config.coneProfile(player);
         if (reach.isNone()) {
-            return player.distanceToSqr(target) <= 36.0;
+            double max = Config.CONE_MAX_REACH;
+            return player.distanceToSqr(target) <= max * max;
         }
         ConeMath.Prepared limits = ConeMath.prepare(
                 reach.distance() + 1.0, reach.horizontalAngle(), reach.verticalAngle());

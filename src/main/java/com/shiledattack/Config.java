@@ -1,5 +1,6 @@
 package com.shiledattack;
 
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -8,6 +9,9 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 @Mod.EventBusSubscriber(modid = ShiledAttackMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+
+    /** 与原版服务端攻击校验一致的锥形前向上限。 */
+    public static final double CONE_MAX_REACH = 6.0D;
 
     public static final ForgeConfigSpec.BooleanValue ENABLED = BUILDER
             .comment("Enable shield auto-release on attack")
@@ -69,10 +73,6 @@ public class Config {
             .comment("Enable cone-shaped melee range: one swing also hits extra targets inside the cone,",
                     "and hold-to-attack picks the nearest entity inside the cone when the crosshair is not on one")
             .define("coneAttackEnabled", true);
-
-    public static final ForgeConfigSpec.DoubleValue CONE_REACH = BUILDER
-            .comment("Cone forward reach in blocks (vanilla server rejects attacks beyond 6)")
-            .defineInRange("coneReach", 3.6, 1.0, 6.0);
 
     public static final ForgeConfigSpec.DoubleValue CONE_HORIZONTAL_ANGLE = BUILDER
             .comment("Cone half-angle to each side, in degrees")
@@ -200,7 +200,6 @@ public class Config {
     public static double parryKnockUp;
     public static double parrySoundVolume;
     public static boolean coneAttackEnabled;
-    public static double coneReach;
     public static double coneHorizontalAngle;
     public static double coneVerticalAngle;
     public static int coneMaxTargets;
@@ -243,7 +242,6 @@ public class Config {
         parrySoundVolume = PARRY_SOUND_VOLUME.get();
 
         coneAttackEnabled = CONE_ATTACK_ENABLED.get();
-        coneReach = CONE_REACH.get();
         coneHorizontalAngle = CONE_HORIZONTAL_ANGLE.get();
         coneVerticalAngle = CONE_VERTICAL_ANGLE.get();
         coneMaxTargets = CONE_MAX_TARGETS.get();
@@ -274,13 +272,23 @@ public class Config {
         piercePlantsEnabled = PIERCE_PLANTS_ENABLED.get();
     }
 
-    /** 当前配置对应的锥形范围。 */
-    public static com.shiledattack.combat.ReachProfile coneProfile() {
-        if (!coneAttackEnabled) {
+    /**
+     * 当前玩家对应的锥形范围。
+     *
+     * <p>前向距离直接使用玩家的实体交互距离（Forge {@code entity_reach} 属性，
+     * 创造模式额外 +3），不再单独配置。上限 6 格与原版服务端校验保持一致，
+     * 同时避免异常高的属性值导致大范围实体扫描。</p>
+     */
+    public static com.shiledattack.combat.ReachProfile coneProfile(Player player) {
+        if (!coneAttackEnabled || player == null) {
+            return com.shiledattack.combat.ReachProfile.NONE;
+        }
+        double reach = Math.min(player.getEntityReach(), CONE_MAX_REACH);
+        if (reach <= 0.0D) {
             return com.shiledattack.combat.ReachProfile.NONE;
         }
         return new com.shiledattack.combat.ReachProfile(
-                (float) coneReach, (float) coneHorizontalAngle, (float) coneVerticalAngle);
+                (float) reach, (float) coneHorizontalAngle, (float) coneVerticalAngle);
     }
 
     /** 无标签档位时的默认蓄力属性（全局配置）。 */

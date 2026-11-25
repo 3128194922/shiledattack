@@ -115,7 +115,7 @@ public final class ConeAttackHandler {
         int extra = Config.coneMaxTargets - 1;
         if (extra <= 0) return;
 
-        ReachProfile reach = Config.coneProfile();
+        ReachProfile reach = Config.coneProfile(player);
         if (reach.isNone()) return;
 
         List<LivingEntity> others = ConeTargets.nearestInCone(

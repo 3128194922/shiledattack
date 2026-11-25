@@ -177,7 +177,7 @@ public class ShieldAutoHandler {
     }
 
     private static LivingEntity coneTarget(Minecraft mc) {
-        ReachProfile reach = Config.coneProfile();
+        ReachProfile reach = Config.coneProfile(mc.player);
         if (reach.isNone()) return null;
         return ConeTargets.nearest(mc.player.level(), mc.player, reach);
     }

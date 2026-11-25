@@ -49,7 +49,7 @@ public final class ConeIndicatorRenderer {
         if (player == null || player.isSpectator()) return;
         if (!holdsWeapon(player)) return;
 
-        ReachProfile reach = Config.coneProfile();
+        ReachProfile reach = Config.coneProfile(player);
         if (reach.isNone()) return;
 
         GuiGraphics graphics = event.getGuiGraphics();

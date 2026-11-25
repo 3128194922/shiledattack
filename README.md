@@ -324,6 +324,7 @@ data/shiledattack/tags/items/cannot_equip_offhand.json
 一次挥击除了命中准星目标外，还会命中前方锥形范围内的其他生物，最多 `coneMaxTargets` 个（含主目标）。
 
 - 锥体跟随视线：抬头能打到头顶，低头能打到脚下
+- 前向距离直接取玩家的**实体交互距离**（Forge `entity_reach` 属性，创造模式含 +3），上限 6 格
 - 水平 / 垂直半角独立配置，垂直默认更窄
 - 额外目标按距离由近到远结算，伤害为 `主目标最终伤害 × coneDamageMultiplier`
 - 长按攻击时，若准星没有指向任何实体，会在锥形范围内自动索敌最近目标
@@ -516,7 +517,6 @@ ServerEvents.tags('item', event => {
 | `parryKnockUp` | double | `0.35` | 盾反时施加给攻击者的上抛力度 |
 | `parrySoundVolume` | double | `1.0` | 盾反铁砧音效音量 |
 | `coneAttackEnabled` | boolean | `true` | 启用锥形攻击范围 |
-| `coneReach` | double | `3.6` | 锥体前向距离（格，上限 6） |
 | `coneHorizontalAngle` | double | `35.0` | 锥体水平半角（度） |
 | `coneVerticalAngle` | double | `30.0` | 锥体垂直半角（度） |
 | `coneMaxTargets` | int | `3` | 单次挥击最多命中数（含主目标） |
@@ -543,6 +543,7 @@ ServerEvents.tags('item', event => {
 
 前四个功能相互独立，可单独开关。`shieldRaiseDelay` 仅在 `shieldDelayOverride=true` 时生效。
 盾反相关配置仅需 `parryEnabled=true` 即生效；`parryWindowTicks` 单位为 tick，`parryCooldownSeconds` 单位为秒。
+锥形索敌距离不再由 `coneReach` 配置决定，旧配置中的该键会被忽略；距离随玩家实体交互距离变化。
 
 ## 技术实现
 
