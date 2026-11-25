@@ -50,7 +50,10 @@ public final class ClientChargeState {
         if (!holding) {
             return 0.0F;
         }
-        return ChargeProfiles.resolve(chargingItem).ratio(heldTicks);
+        double chargeSpeed = Minecraft.getInstance().player == null
+                ? ChargeSpeed.DEFAULT_VALUE
+                : ChargeSpeed.of(Minecraft.getInstance().player);
+        return ChargeProfiles.resolve(chargingItem).ratio(heldTicks, chargeSpeed);
     }
 
     /** 主手物品是否已不是开始蓄力的那件，用于中途换武器时放弃蓄力。 */

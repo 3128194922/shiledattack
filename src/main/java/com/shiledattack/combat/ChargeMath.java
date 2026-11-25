@@ -30,6 +30,30 @@ public final class ChargeMath {
     }
 
     /**
+     * 按玩家蓄力速度属性缩放武器档位后计算比例。
+     *
+     * <p>最短按住与满蓄力时长按同一比例缩放，最低均为 1 tick。
+     * 属性为 0 时与原公式完全一致。</p>
+     *
+     * @param chargeSpeed 玩家蓄力速度属性，0..1
+     */
+    public static float ratio(int heldTicks, int fullTicks, int minHoldTicks, double chargeSpeed) {
+        int min = scaleTicks(Math.max(1, minHoldTicks), chargeSpeed);
+        int full = scaleTicks(Math.max(min, fullTicks), chargeSpeed);
+        return ratio(heldTicks, full, min);
+    }
+
+    /**
+     * 按蓄力速度属性缩放 tick 数，最低保留 1 tick。
+     *
+     * <p>属性为比例值 0..1；0 不缩放，0.5 耗时减半，1 直接落到 1 tick。</p>
+     */
+    public static int scaleTicks(int baseTicks, double chargeSpeed) {
+        double factor = 1.0D - Math.max(0.0D, Math.min(1.0D, chargeSpeed));
+        return Math.max(1, (int) Math.round(Math.max(1, baseTicks) * factor));
+    }
+
+    /**
      * 蓄力伤害倍率。蓄力只加不减：比例 0 时返回 1.0。
      *
      * @param bonus 满蓄力时的额外倍率（1.0 表示满蓄力伤害翻倍）

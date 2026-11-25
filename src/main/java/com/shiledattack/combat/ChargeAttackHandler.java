@@ -85,7 +85,8 @@ public final class ChargeAttackHandler {
             heldTicks = Math.max(0, clientHeldTicks);
         }
 
-        float ratio = profile.ratio(heldTicks);
+        double chargeSpeed = ChargeSpeed.of(player);
+        float ratio = profile.ratio(heldTicks, chargeSpeed);
         float multiplier = profile.multiplier(ratio);
         // 原版点击伤害会随攻击冷却进度衰减：damage = 攻击力 × (0.2 + 冷却² × 0.8)。
         // 蓄力沿用同一公式，让“快速连点”与“满蓄力”之间保持合理的节奏差。

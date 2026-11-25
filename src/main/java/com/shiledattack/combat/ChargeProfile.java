@@ -42,6 +42,14 @@ public record ChargeProfile(boolean enabled, int minHoldTicks, int fullTicks, fl
         return ChargeMath.ratio(heldTicks, fullTicks, minHoldTicks);
     }
 
+    /** 当前按住时长与玩家蓄力速度属性共同决定的蓄力比例 0..1。 */
+    public float ratio(int heldTicks, double chargeSpeed) {
+        if (!enabled) {
+            return 0.0F;
+        }
+        return ChargeMath.ratio(heldTicks, fullTicks, minHoldTicks, chargeSpeed);
+    }
+
     /** 当前蓄力比例对应的伤害倍率。 */
     public float multiplier(float ratio) {
         if (!enabled) {

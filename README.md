@@ -346,6 +346,30 @@ data/shiledattack/tags/items/cannot_equip_offhand.json
 - 蓄力攻击可以触发**跳劈（下落暴击）**：与普通攻击相同的判定条件，倍率由 `chargeCriticalMultiplier` 控制，可用 `chargeCriticalEnabled` 关闭
 - 蓄力命中会播放原版音效 `minecraft:entity.player.attack.crit`，并按蓄力比例放大屏幕抖动
 
+**玩家蓄力速度属性：** `shiledattack:charge_speed`（范围 `0..1`，默认 `0`）。
+它在武器自身档位之外再缩放蓄力耗时：
+
+```text
+实际耗时 = max(1, round(武器基础耗时 × (1 - 属性值)))
+```
+
+| 属性值 | 效果 |
+|--------|------|
+| `0` | 保持武器原始蓄力速度 |
+| `0.5` | 蓄力耗时减半（速度约为原来的 2 倍） |
+| `1.0` | 最快，最低 1 tick |
+
+`min_hold` 与 `full_ticks` 按同一比例缩放，缩放后最低均为 1 tick。属性由服务端结算，
+客户端同步值只用于 HUD 与手感预测。
+
+```mcfunction
+# 设置基础属性
+/attribute @s shiledattack:charge_speed base set 0.5
+
+# 查看当前值
+/attribute @s shiledattack:charge_speed get
+```
+
 **蓄力属性优先级（高到低）：** 数据包 JSON → KubeJS 脚本 → 标签档位 → 全局配置。
 
 标签文件位置：`data/shiledattack/tags/items/charge_attack.json`
